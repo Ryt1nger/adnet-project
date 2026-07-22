@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Adnet - marketplace для прозрачных рекламных размещений и UGC-заказов в Telegram."
+    />
+    <title>Adnet - продвижение, которое работает</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Adnet, на главную">
+        <img class="brand-image" src="assets/adnet-mark.png" alt="Adnet" />
+      </a>
+      <nav class="desktop-nav" aria-label="Основная навигация">
+        <a href="#process">Как работает</a>
+        <a href="#formats">Форматы</a>
+        <a href="#roles">Для бизнеса</a>
+      </nav>
+      <a class="header-action" href="#start">Запустить кампанию <i data-lucide="arrow-up-right"></i></a>
+    </header>
+
+    <main id="top">
+      <section class="hero section-shell">
+        <div class="hero-copy">
+          <p class="eyebrow"><span></span> Marketplace для рекламы и UGC</p>
+          <h1>Adnet</h1>
+          <p class="hero-lead">Продвижение, которое<br />можно контролировать.</p>
+          <p class="hero-description">
+            Находите исполнителей, фиксируйте условия и оплачивайте только подтвержденный результат.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#start">Создать кампанию <i data-lucide="arrow-up-right"></i></a>
+            <a class="text-link" href="#process">Смотреть процесс <i data-lucide="arrow-down"></i></a>
+          </div>
+          <div class="trust-line">
+            <span class="trust-dot"></span>
+            <span>Сделка защищена на каждом этапе</span>
+          </div>
+        </div>
+
+        <div class="hero-visual" aria-label="Пример кампании Adnet">
+          <div class="visual-label"><span></span> LIVE WORKFLOW</div>
+          <div class="orbit orbit-one"></div>
+          <div class="orbit orbit-two"></div>
+          <article class="campaign-card" id="campaignCard">
+            <div class="card-topline">
+              <div class="campaign-title-wrap">
+                <span class="campaign-symbol"><i data-lucide="sparkles"></i></span>
+                <div>
+                  <p class="mini-label">Кампания</p>
+                  <h2>Запуск продукта</h2>
+                </div>
+              </div>
+              <button class="icon-button" type="button" aria-label="Открыть меню кампании" title="Меню кампании"><i data-lucide="more-horizontal"></i></button>
+            </div>
+            <div class="status-row">
+              <span class="status-pill"><span></span><b id="statusText">В работе</b></span>
+              <span class="deadline"><i data-lucide="clock-3"></i> До 18 июля</span>
+            </div>
+            <div class="stats-grid">
+              <div><p>Бюджет</p><strong>120 000 ₽</strong></div>
+              <div><p>Исполнители</p><strong>04 <small>подтверждены</small></strong></div>
+            </div>
+            <div class="progress-area">
+              <div class="progress-meta"><span>Ход кампании</span><b id="progressNumber">64%</b></div>
+              <div class="progress-track"><span id="progressFill"></span></div>
+            </div>
+            <div class="active-deal">
+              <div class="avatar-gradient">AM</div>
+              <div class="deal-info"><p>Активная сделка</p><strong id="dealName">UGC для Telegram</strong></div>
+              <i data-lucide="chevron-right"></i>
+            </div>
+          </article>
+          <div class="floating-proof proof-one"><i data-lucide="shield-check"></i><span>Бюджет зарезервирован</span></div>
+          <div class="floating-proof proof-two"><i data-lucide="check"></i><span>Результат принят</span></div>
+          <div class="mode-control" role="group" aria-label="Роль в сервисе">
+            <button class="mode-button active" type="button" data-mode="advertiser">Бизнес</button>
+            <button class="mode-button" type="button" data-mode="creator">Автор</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="statement section-shell" id="benefits">
+        <p class="section-kicker">Без серых зон</p>
+        <div class="statement-layout">
+          <h2>Одна сделка.<br />Полная ясность.</h2>
+          <p>Adnet соединяет бриф, подбор исполнителя, подтверждение результата и выплату в одном спокойном рабочем пространстве.</p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card">
+            <span class="feature-number">01</span>
+            <i data-lucide="file-check-2"></i>
+            <h3>Точное ТЗ</h3>
+            <p>Условия, формат и критерии приемки фиксируются до старта.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-number">02</span>
+            <i data-lucide="wallet-cards"></i>
+            <h3>Защищенный бюджет</h3>
+            <p>Средства резервируются и выплачиваются после подтверждения работы.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-number">03</span>
+            <i data-lucide="badge-check"></i>
+            <h3>Проверяемый результат</h3>
+            <p>Ссылки, файлы и метрики остаются в карточке сделки.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="formats-section section-shell" id="formats">
+        <div class="formats-head">
+          <div>
+            <p class="section-kicker">Форматы работы</p>
+            <h2>Не просто подбор автора.<br />Сделка от брифа до результата.</h2>
+          </div>
+          <p>Adnet объединяет два понятных формата в одном процессе. Вы задаете условия, выбираете исполнителя и принимаете работу по заранее согласованным критериям.</p>
+        </div>
+        <div class="service-grid">
+          <article class="service-card placement-card">
+            <div class="service-icon"><i data-lucide="radio-tower"></i></div>
+            <p class="card-overline">Формат 01</p>
+            <h3>Рекламные размещения</h3>
+            <p>Публикации и интеграции на площадках авторов. Для запуска вы фиксируете площадку, требования, дедлайн, бюджет и правила приемки.</p>
+            <ul>
+              <li>Ссылка на публикацию и данные аккаунта</li>
+              <li>Промокод, хэштег или маркировка при необходимости</li>
+              <li>Контроль наличия публикации в согласованный период</li>
+            </ul>
+          </article>
+          <article class="service-card ugc-card">
+            <div class="service-icon"><i data-lucide="clapperboard"></i></div>
+            <p class="card-overline">Формат 02</p>
+            <h3>UGC-production</h3>
+            <p>Видео, фото и нативные материалы, которые бренд использует в своих каналах или рекламе. Все версии и права на использование фиксируются в сделке.</p>
+            <ul>
+              <li>Файл, формат, версия и техническое задание</li>
+              <li>Правки через единый рабочий контур</li>
+              <li>Передача финального результата в карточке сделки</li>
+            </ul>
+          </article>
+          <aside class="formats-aside">
+            <div class="aside-title"><i data-lucide="layers-3"></i><span>Площадки</span></div>
+            <div class="platform-list"><span>Telegram</span><span>VK</span><span>YouTube</span><span>TikTok</span><span>Instagram</span></div>
+            <div class="aside-divider"></div>
+            <div class="aside-title"><i data-lucide="scan-search"></i><span>Что проверяем</span></div>
+            <p>Соответствие ТЗ, ссылку или файл, Evidence, контрольные сроки и публичные метрики, когда они доступны.</p>
+            <div class="aside-note"><i data-lucide="info"></i><span>Adnet подтверждает исполнение условий сделки, но не обещает продажи, лиды или охват.</span></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="process-section" id="process">
+        <div class="section-shell">
+          <div class="process-heading">
+            <p class="section-kicker">Процесс</p>
+            <h2>От идеи до отчета<br />без лишних касаний.</h2>
+            <p>Все, что нужно для безопасной рекламной сделки, уже встроено в поток работы.</p>
+          </div>
+          <div class="process-list">
+            <button class="process-item" type="button" data-process="campaign" aria-haspopup="dialog">
+              <span>01</span>
+              <div><h3>Создайте кампанию</h3><p>Опишите задачу, бюджет и требования к площадке или UGC.</p></div>
+              <i data-lucide="arrow-down-right"></i>
+            </button>
+            <button class="process-item" type="button" data-process="creator" aria-haspopup="dialog">
+              <span>02</span>
+              <div><h3>Выберите автора</h3><p>Сравните заявки, профили и условия в одном списке.</p></div>
+              <i data-lucide="arrow-down-right"></i>
+            </button>
+            <button class="process-item" type="button" data-process="review" aria-haspopup="dialog">
+              <span>03</span>
+              <div><h3>Примите результат</h3><p>Проверьте доказательства выполнения и получите финальный отчет.</p></div>
+              <i data-lucide="arrow-down-right"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="platform-section section-shell">
+        <div class="platform-copy">
+          <p class="section-kicker">Для рекламодателей и авторов</p>
+          <h2>Реклама становится<br />управляемой.</h2>
+          <p>Находите релевантные размещения и UGC-исполнителей в Telegram-first рабочем пространстве. Без десятков чатов и потерянных договоренностей.</p>
+          <a class="text-link" href="#access" data-open-access>Запросить ранний доступ <i data-lucide="arrow-up-right"></i></a>
+        </div>
+        <div class="control-panel" aria-label="Преимущества платформы">
+          <div class="panel-head"><span>Контроль кампании</span><i data-lucide="activity"></i></div>
+          <div class="panel-row"><span class="row-indicator lime"></span><p>Условия согласованы</p><i data-lucide="check"></i></div>
+          <div class="panel-row"><span class="row-indicator blue"></span><p>Результат на проверке</p><i data-lucide="eye"></i></div>
+          <div class="panel-row"><span class="row-indicator white"></span><p>Выплата запланирована</p><i data-lucide="arrow-up-right"></i></div>
+          <div class="panel-foot"><span>Прозрачная история действий</span><span class="pulse"></span></div>
+        </div>
+      </section>
+
+      <section class="roles-section" id="roles">
+        <div class="section-shell">
+          <div class="roles-heading">
+            <p class="section-kicker">Две стороны одной сделки</p>
+            <h2>Меньше ручной работы.<br />Больше ясности.</h2>
+          </div>
+          <div class="roles-grid">
+            <article class="role-panel role-business">
+              <div class="role-top"><span>Для бизнеса</span><i data-lucide="briefcase-business"></i></div>
+              <h3>Управляйте рекламой как проектом.</h3>
+              <p>Создавайте кампании по шаблону, сравнивайте заявки и храните всю историю решений, материалов и выплат в одном месте.</p>
+              <div class="role-points"><span>Единый бриф</span><span>Сравнение заявок</span><span>Отчет по кампании</span></div>
+            </article>
+            <article class="role-panel role-creator">
+              <div class="role-top"><span>Для авторов</span><i data-lucide="sparkles"></i></div>
+              <h3>Берите понятные заказы с понятной оплатой.</h3>
+              <p>Находите задачи, где заранее известны условия, сроки и критерии приемки. Передавайте результат и следите за статусом выплаты без лишних сообщений.</p>
+              <div class="role-points"><span>Прозрачное ТЗ</span><span>История работы</span><span>Защищенная выплата</span></div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="cta-section" id="start">
+        <div class="cta-grid section-shell">
+          <div class="cta-copy">
+            <p class="section-kicker">Закрытый запуск</p>
+            <h2>Первая кампания<br />начинается с ясного брифа.</h2>
+            <p>Подключаем первые команды и авторов к рабочему контуру Adnet: от задачи до подтвержденного результата.</p>
+            <div class="cta-actions">
+              <a class="button button-primary" href="#access" data-open-access>Получить доступ <i data-lucide="arrow-up-right"></i></a>
+              <span>Без обязательств<br />на старте</span>
+            </div>
+          </div>
+          <div class="cta-route" aria-label="Как начинается работа с Adnet">
+            <div class="cta-route-head"><span>После заявки</span><span>01 - 03</span></div>
+            <ol>
+              <li><span>01</span><div><h3>Коротко о задаче</h3><p>Цель, формат, площадка и ориентир по бюджету.</p></div><i data-lucide="plus"></i></li>
+              <li><span>02</span><div><h3>Собираем контур кампании</h3><p>Фиксируем ТЗ, условия и критерии приемки.</p></div><i data-lucide="plus"></i></li>
+              <li><span>03</span><div><h3>Запускаем сделку</h3><p>Подбор автора, Evidence и контроль этапов.</p></div><i data-lucide="arrow-up-right"></i></li>
+            </ol>
+            <div class="cta-route-foot"><span class="route-pulse"></span><span>Сделка остается прозрачной на каждом этапе</span></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <dialog class="modal access-modal" id="accessModal" aria-labelledby="accessModalTitle">
+      <div class="modal-shell">
+        <button class="modal-close" type="button" data-close-modal aria-label="Закрыть форму" title="Закрыть"><i data-lucide="x"></i></button>
+        <div class="modal-heading">
+          <p class="modal-kicker"><span></span> Ранний доступ</p>
+          <h2 id="accessModalTitle">Расскажите о первой кампании.</h2>
+          <p>Оставьте контакт и контекст задачи. Форма демонстрационная: после подключения backend данные можно отправлять в CRM или Telegram-бот.</p>
+        </div>
+        <form class="access-form" id="accessForm">
+          <div class="form-row">
+            <label>Имя<input name="name" type="text" autocomplete="name" required placeholder="Как к вам обращаться" /></label>
+            <label>Компания<input name="company" type="text" autocomplete="organization" required placeholder="Название компании" /></label>
+          </div>
+          <label>Контакт для связи<input name="contact" type="text" required placeholder="Telegram, email или телефон" /></label>
+          <label>Что хотите запустить
+            <select name="format" required>
+              <option value="" selected disabled>Выберите формат</option>
+              <option>Рекламные размещения</option>
+              <option>UGC-production</option>
+              <option>Пока нужна консультация</option>
+            </select>
+          </label>
+          <label>Коротко о задаче<textarea name="brief" rows="3" placeholder="Цель, площадка, ориентир по бюджету"></textarea></label>
+          <button class="button button-primary form-submit" type="submit">Оставить заявку <i data-lucide="arrow-up-right"></i></button>
+        </form>
+        <div class="form-success" id="formSuccess" hidden>
+          <span><i data-lucide="check"></i></span>
+          <h3>Заявка готова к отправке.</h3>
+          <p>На следующем шаге подключим отправку данных в вашу CRM или Telegram-бот.</p>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="modal process-modal" id="processModal" aria-labelledby="processModalTitle">
+      <div class="modal-shell">
+        <button class="modal-close" type="button" data-close-modal aria-label="Закрыть подробности" title="Закрыть"><i data-lucide="x"></i></button>
+        <div class="process-modal-top">
+          <span class="modal-step" id="processModalStep">01</span>
+          <div><p class="modal-kicker" id="processModalKicker">Этап процесса</p><h2 id="processModalTitle"></h2></div>
+        </div>
+        <p class="process-modal-lead" id="processModalLead"></p>
+        <div class="process-modal-grid" id="processModalBody"></div>
+        <div class="process-modal-foot"><i data-lucide="shield-check"></i><span>Все важные действия и решения сохраняются в истории сделки.</span></div>
+      </div>
+    </dialog>
+
+    <footer class="site-footer">
+      <div class="footer-inner section-shell">
+        <div class="footer-lead">
+          <a class="brand footer-brand" href="#top" aria-label="Adnet, на главную"><img class="brand-image" src="assets/adnet-mark.png" alt="Adnet" /></a>
+          <div class="footer-message">
+            <span>Продвижение, которое работает</span>
+            <i aria-hidden="true"></i>
+          </div>
+          <a class="footer-access" href="#access" data-open-access>Получить ранний доступ <i data-lucide="arrow-up-right"></i></a>
+        </div>
+        <div class="footer-directory">
+          <section class="footer-column">
+            <p>Продукт</p>
+            <a href="#process">Как работает Adnet</a>
+            <a href="#formats">Форматы работы</a>
+            <a href="#benefits">Контроль сделки</a>
+          </section>
+          <section class="footer-column">
+            <p>Для бизнеса</p>
+            <a href="#start">Создать кампанию</a>
+            <a href="#formats">Рекламные размещения</a>
+            <a href="#formats">UGC-production</a>
+          </section>
+          <section class="footer-column">
+            <p>Для авторов</p>
+            <a href="#roles">Условия работы</a>
+            <a href="#process">Процесс сделки</a>
+            <a href="#roles">Защищенная выплата</a>
+          </section>
+          <section class="footer-column footer-contact">
+            <p>Контакты</p>
+            <a href="mailto:hello@adnet.ru">hello@adnet.ru</a>
+            <span>Вопросы, пилоты и партнерства</span>
+            <span>Telegram-first marketplace</span>
+          </section>
+        </div>
+        <div class="footer-disclaimer">
+          <i data-lucide="shield-check"></i>
+          <p>Adnet подтверждает выполнение условий сделки: бриф, результат, Evidence и статусы платежа. Коммерческий результат кампании зависит от самого предложения и площадки.</p>
+        </div>
+        <div class="footer-meta">
+          <span><i></i> Закрытый запуск</span>
+          <span>© 2026 Adnet</span>
+          <span>Условия и политика появятся перед публичным запуском</span>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
