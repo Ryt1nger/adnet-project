@@ -1,18 +1,21 @@
-# Adnet Landing
+# Adnet Project
 
-Landing page for Adnet, a Telegram-first marketplace for advertising placements and UGC production.
+Complete working folder for Adnet: a Telegram-first advertising and UGC marketplace.
 
-## Local preview
+## Structure
+
+- `landing-page/` - published static landing page source.
+- `landing-page/assets/` - landing assets, including the Adnet mark.
+- `материалы/` - business plans, process documents, technical briefs, roadmap PDFs, and visual references.
+
+## Landing Preview
 
 ```bash
-python3 -m http.server 4173
+python3 -m http.server 4173 --directory landing-page
 ```
 
 Open `http://localhost:4173` in a browser.
 
-## Contents
+## Notes
 
-- `index.html` - page structure and modal dialogs
-- `styles.css` - responsive visual system and motion
-- `script.js` - interactions, form demo, and process details
-- `assets/adnet-mark.png` - Adnet mark used in the header and footer
+The project is intended as a full visual Telegram Mini App, not a chatbot interface. The landing page is a standalone static preview; product development materials are kept in `материалы/`.
