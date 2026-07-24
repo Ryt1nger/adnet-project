@@ -25,10 +25,16 @@ node --check apps/mini-app/src/app-shell.js
 - Mobile-first Telegram WebView app shell.
 - Safe-area aware layout.
 - Telegram WebApp SDK integration boundary.
+- Telegram initData forwarding boundary for server validation.
+- Session restoration and normalized `/me` model.
+- Role selection/confirmation for `advertiser` and `creator`.
+- RBAC route guards for protected shell routes.
 - Hash-based route shell and bottom navigation.
 - Dark/lime Adnet design tokens.
-- Presentational loading, error, and empty states.
+- Presentational auth/loading/error/empty states.
 
 ## Boundary
 
 This is a visual web application, not a chat bot interface. Telegram bot behavior belongs in `apps/telegram-gateway/`.
+
+The frontend does not cryptographically validate Telegram `initData`. It forwards raw `initData` to the API contract; server-side validation belongs in `apps/api`.

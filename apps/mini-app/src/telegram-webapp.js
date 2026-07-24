@@ -27,6 +27,8 @@ export function initializeTelegramBoundary() {
 
   return {
     runtime: 'telegram',
+    initData: webApp.initData ?? '',
+    initDataUnsafe: webApp.initDataUnsafe ?? null,
     viewportHeight: webApp.viewportStableHeight ?? webApp.viewportHeight ?? window.innerHeight,
     safeAreaInset: webApp.safeAreaInset ?? null,
     colorScheme: webApp.colorScheme ?? 'dark',

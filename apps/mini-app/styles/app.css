@@ -135,6 +135,8 @@ a {
 .status-stack article,
 .surface-card,
 .state-card,
+.auth-panel,
+.user-card,
 .system-panel dl {
   border: 1px solid var(--color-line);
   border-radius: var(--radius-md);
@@ -238,6 +240,139 @@ a {
   background: linear-gradient(135deg, rgba(255, 92, 108, 0.88), rgba(255, 92, 108, 0.12));
 }
 
+.auth-panel {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+}
+
+.auth-panel h1 {
+  margin: 0;
+  color: var(--color-white);
+  font-size: 36px;
+  line-height: 1;
+}
+
+.auth-panel > p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.user-card {
+  display: grid;
+  grid-template-columns: 54px 1fr;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+}
+
+.user-avatar {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--color-lime);
+  color: var(--color-black);
+  font-weight: 900;
+}
+
+.user-card strong {
+  display: block;
+  color: var(--color-white);
+}
+
+.user-card p,
+.user-card span {
+  display: block;
+  margin: 3px 0 0;
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+.action-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+
+.primary-action,
+.ghost-action,
+.state-action,
+.role-option {
+  min-height: 48px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.primary-action,
+.state-action {
+  border: 0;
+  background: var(--color-lime);
+  color: var(--color-black);
+  font-weight: 900;
+}
+
+.ghost-action {
+  border: 1px solid var(--color-line);
+  background: transparent;
+  color: var(--color-white);
+  font-weight: 800;
+}
+
+.state-action {
+  margin-top: 12px;
+  padding: 0 16px;
+}
+
+.role-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.role-option {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 8px 12px;
+  min-height: 104px;
+  padding: 14px;
+  border: 1px solid var(--color-line);
+  background: rgba(12, 16, 13, 0.9);
+  color: var(--color-white);
+  text-align: left;
+}
+
+.role-option span {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(215, 255, 0, 0.12);
+  color: var(--color-lime);
+  font-size: 11px;
+  font-weight: 900;
+  grid-row: 1 / span 2;
+}
+
+.role-option strong {
+  align-self: end;
+}
+
+.role-option p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.role-option.active {
+  border-color: var(--color-lime);
+  box-shadow: inset 0 0 0 1px var(--color-lime);
+}
+
 .system-panel dl {
   display: grid;
   gap: 0;
@@ -280,7 +415,7 @@ a {
   left: calc(50% - min(240px, 50vw) + 14px + var(--safe-left));
   z-index: 20;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 6px;
   padding: 8px;
   border: 1px solid var(--color-line);
@@ -324,6 +459,10 @@ a {
 .nav-item.active {
   background: var(--color-lime);
   color: #050706;
+}
+
+.nav-item[data-locked="true"] {
+  opacity: 0.54;
 }
 
 .noscript-state {
