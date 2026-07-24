@@ -1,15 +1,34 @@
 # Telegram Mini App
 
-Future user-facing Adnet web application launched inside Telegram.
+User-facing Adnet web application launched inside Telegram.
 
-## Responsibility
+This module currently contains the Foundation / App Shell only. It does not implement auth, roles, backend calls, campaigns, deals, payments, or business workflows.
 
-- Mobile-first Telegram WebView layout.
-- Advertiser and creator dashboards.
-- Campaign creation wizard.
-- Marketplace/task feed.
-- Deal workspace, Evidence, review, reports, and payment status screens.
+## Run Locally
+
+```bash
+python3 -m http.server 4190 --directory apps/mini-app
+```
+
+Open `http://localhost:4190`.
+
+## Check
+
+```bash
+node --check apps/mini-app/src/telegram-webapp.js
+node --check apps/mini-app/src/routes.js
+node --check apps/mini-app/src/app-shell.js
+```
+
+## Current Scope
+
+- Mobile-first Telegram WebView app shell.
+- Safe-area aware layout.
+- Telegram WebApp SDK integration boundary.
+- Hash-based route shell and bottom navigation.
+- Dark/lime Adnet design tokens.
+- Presentational loading, error, and empty states.
 
 ## Boundary
 
-This is a visual web application, not a chat bot interface. No product implementation lives here yet.
+This is a visual web application, not a chat bot interface. Telegram bot behavior belongs in `apps/telegram-gateway/`.
