@@ -1,0 +1,10 @@
+{
+  "name": "@adnet/mini-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 4190 --directory .",
+    "check": "node --check src/telegram-webapp.js && node --check src/routes.js && node --check src/app-shell.js && node --check src/auth/api-contract.js && node --check src/auth/auth-client.js && node --check src/auth/http-auth-adapter.js && node --check src/auth/mock-auth-adapter.js && node --check src/auth/rbac.js && node --check src/auth/session-store.js"
+  }
+}
