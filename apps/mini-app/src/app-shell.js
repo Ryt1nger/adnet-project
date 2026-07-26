@@ -1,14 +1,13 @@
 import { initializeTelegramBoundary } from './telegram-webapp.js';
-import { findRoute, routes } from './routes.js';
+import { findRoute, getRouteLabel, routes } from './routes.js?v=product-ui';
 import { ROLE_OPTIONS } from './auth/api-contract.js';
 import { createAuthClient } from './auth/auth-client.js';
-import { createMockAuthAdapter } from './auth/mock-auth-adapter.js';
-import { canAccessRoute, getAccessRedirect } from './auth/rbac.js';
+import { createMockAuthAdapter } from './auth/mock-auth-adapter.js?v=product-ui';
+import { canAccessRoute, getAccessRedirect } from './auth/rbac.js?v=product-ui';
 import { createSessionStore } from './auth/session-store.js';
 
 const root = document.querySelector('#app-root');
 const nav = document.querySelector('[data-bottom-nav]');
-const runtimePill = document.querySelector('[data-runtime-pill]');
 
 const runtime = initializeTelegramBoundary();
 const authClient = createAuthClient({
@@ -25,14 +24,13 @@ const state = {
 };
 
 const context = {
-  runtimeLabel: runtime.runtime === 'telegram' ? 'Telegram WebView' : 'Browser preview',
+  runtimeLabel: '',
   viewportHeight: Math.round(runtime.viewportHeight),
   auth: state.auth,
-  authLabel: 'Checking session',
+  authLabel: 'Проверяем вход',
+  authHint: 'Подготавливаем ваш рабочий экран.',
   roleOptions: ROLE_OPTIONS,
 };
-
-runtimePill.textContent = context.runtimeLabel;
 
 function getCurrentPath() {
   const hash = window.location.hash.replace(/^#/, '');
@@ -49,17 +47,44 @@ function navigate(path) {
 }
 
 function renderNavigation(activeRoute) {
-  nav.innerHTML = routes
+  const activeRole = state.auth.me?.activeRole;
+  const navRoutes = routes
     .filter((route) => route.nav !== false)
-    .map(
-      (route) => `
-        <button class="nav-item ${route.id === activeRoute.id ? 'active' : ''}" type="button" data-path="${route.path}" aria-current="${route.id === activeRoute.id ? 'page' : 'false'}" ${canAccessRoute(route, state.auth) ? '' : 'data-locked="true"'}>
-          <span aria-hidden="true">${route.icon}</span>
-          <strong>${route.label}</strong>
-        </button>
-      `
-    )
-    .join('');
+    .filter((route) => canAccessRoute(route, state.auth));
+
+  nav.classList.toggle('is-hidden', !activeRole);
+  nav.classList.toggle('is-advertiser', activeRole === 'advertiser');
+  nav.classList.toggle('is-creator', activeRole === 'creator');
+
+  if (!activeRole) {
+    nav.innerHTML = '';
+    return;
+  }
+
+  const items = navRoutes.map((route) => renderNavItem(route, activeRoute, activeRole));
+
+  if (activeRole === 'advertiser') {
+    items.splice(2, 0, renderCreateAction());
+  }
+
+  nav.innerHTML = items.join('');
+}
+
+function renderNavItem(route, activeRoute, activeRole) {
+  return `
+    <button class="nav-item ${route.id === activeRoute.id ? 'active' : ''}" type="button" data-path="${route.path}" aria-current="${route.id === activeRoute.id ? 'page' : 'false'}">
+      <span aria-hidden="true">${route.icon}</span>
+      <strong>${getRouteLabel(route, activeRole)}</strong>
+    </button>
+  `;
+}
+
+function renderCreateAction() {
+  return `
+    <button class="nav-create" type="button" data-nav-action="create" aria-label="Новая задача">
+      <span aria-hidden="true">+</span>
+    </button>
+  `;
 }
 
 function render() {
@@ -71,7 +96,7 @@ function render() {
   }
 
   syncContext();
-  document.title = `${route.title} - Adnet Mini App`;
+  document.title = `${route.title} - Adnet`;
   root.innerHTML =
     route.access?.auth && state.auth.status === 'checking'
       ? renderGuardLoading()
@@ -81,7 +106,11 @@ function render() {
 }
 
 async function restoreSession() {
-  await runAuthAction(async () => authClient.restoreSession());
+  await runAuthAction(async () => {
+    const restoredSession = await authClient.restoreSession();
+    if (restoredSession.status !== 'anonymous') return restoredSession;
+    return authClient.authenticateWithTelegram(runtime.initData ?? '');
+  });
 }
 
 async function authenticateWithTelegram() {
@@ -91,7 +120,7 @@ async function authenticateWithTelegram() {
 
 async function selectRole(role) {
   await runAuthAction(async () => authClient.selectRole(role));
-  navigate('/workspace');
+  navigate('/');
 }
 
 async function logout() {
@@ -114,7 +143,7 @@ async function runAuthAction(action) {
     state.auth = {
       status: 'error',
       me: null,
-      errorMessage: error instanceof Error ? error.message : 'Unknown auth error',
+      errorMessage: error instanceof Error ? error.message : 'Неизвестная ошибка входа',
     };
   }
 
@@ -125,24 +154,35 @@ async function runAuthAction(action) {
 function syncContext() {
   context.auth = state.auth;
   context.authLabel = getAuthLabel();
+  context.authHint = getAuthHint();
 }
 
 function getAuthLabel() {
-  if (state.auth.status === 'checking') return 'Checking session';
-  if (state.auth.status === 'anonymous') return 'Anonymous';
-  if (state.auth.status === 'role_required') return 'Role required';
-  if (state.auth.status === 'error') return 'Auth error';
-  return state.auth.me?.activeRole ? `Ready as ${state.auth.me.activeRole}` : 'Ready';
+  if (state.auth.status === 'checking') return 'Проверяем вход';
+  if (state.auth.status === 'anonymous') return 'Войдите в аккаунт';
+  if (state.auth.status === 'role_required') return 'Выберите роль';
+  if (state.auth.status === 'error') return 'Нужна повторная попытка';
+  if (state.auth.me?.activeRole === 'creator') return 'Вы вошли как исполнитель';
+  if (state.auth.me?.activeRole === 'advertiser') return 'Вы вошли как рекламодатель';
+  return 'Вход выполнен';
+}
+
+function getAuthHint() {
+  if (state.auth.status === 'anonymous') return 'Вход откроет ваши заказы и сохраненные площадки.';
+  if (state.auth.status === 'role_required') return 'Выберите формат работы, чтобы продолжить.';
+  if (state.auth.status === 'error') return 'Проверьте соединение и попробуйте снова.';
+  if (state.auth.me?.activeRole) return 'Ваши рабочие разделы готовы.';
+  return 'Подготавливаем ваш рабочий экран.';
 }
 
 function renderGuardLoading() {
   return `
-    <section class="states-list" aria-label="Protected route loading state">
+    <section class="states-list" aria-label="Проверка доступа">
       <article class="state-card state-loading">
         <div class="state-visual" aria-hidden="true"></div>
         <div>
           <h2>Проверяем доступ</h2>
-          <p>Сначала восстанавливаем сессию и /me, затем пропускаем пользователя в защищенный route.</p>
+          <p>Подготавливаем ваш рабочий экран.</p>
         </div>
       </article>
     </section>
@@ -150,6 +190,12 @@ function renderGuardLoading() {
 }
 
 nav.addEventListener('click', (event) => {
+  const actionButton = event.target.closest('[data-nav-action]');
+  if (actionButton?.dataset.navAction === 'create') {
+    navigate('/create');
+    return;
+  }
+
   const button = event.target.closest('[data-path]');
   if (!button) return;
   navigate(button.dataset.path);

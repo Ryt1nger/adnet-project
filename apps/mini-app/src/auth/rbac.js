@@ -13,6 +13,6 @@ export function getAccessRedirect(route, authState) {
   if (authState.status === 'checking') return null;
   if (!authState.me) return '/auth';
   if (!authState.me.activeRole) return '/role';
-  if (!canAccessRoute(route, authState)) return '/auth';
+  if (!canAccessRoute(route, authState)) return '/';
   return null;
 }

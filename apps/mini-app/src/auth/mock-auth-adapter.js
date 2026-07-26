@@ -1,6 +1,6 @@
 import { isKnownRole, normalizeAuthSession, normalizeMe } from './api-contract.js';
 
-const PREVIEW_TOKEN = 'preview-session-token';
+const PREVIEW_TOKEN = 'adnet-session-token';
 
 export function createMockAuthAdapter() {
   let me = null;
@@ -14,7 +14,7 @@ export function createMockAuthAdapter() {
 
     async authenticateWithTelegram({ initData }) {
       if (typeof initData !== 'string') {
-        throw new Error('Telegram initData must be passed to the API boundary');
+        throw new Error('Не удалось получить данные для входа');
       }
 
       me = createPreviewUser();
@@ -26,7 +26,7 @@ export function createMockAuthAdapter() {
 
     async selectRole(role) {
       if (!me) throw new Error('Session is required before role selection');
-      if (!isKnownRole(role)) throw new Error('Unknown role');
+      if (!isKnownRole(role)) throw new Error('Выберите доступную роль');
       me = {
         ...me,
         roles: Array.from(new Set([...me.roles, role])),
@@ -43,14 +43,14 @@ export function createMockAuthAdapter() {
 
 function createPreviewUser() {
   return {
-    id: 'preview-user',
+    id: 'adnet-user',
     telegramUser: {
-      id: 'telegram-preview',
+      id: 'telegram-user',
       firstName: 'Adnet',
-      username: 'preview_user',
+      username: 'adnet_user',
     },
-    roles: [],
-    activeRole: null,
+    roles: ['advertiser'],
+    activeRole: 'advertiser',
     sessionStatus: 'active',
   };
 }

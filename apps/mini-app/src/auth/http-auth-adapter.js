@@ -45,7 +45,7 @@ export function createHttpAuthAdapter({ baseUrl = '', fetchImpl = window.fetch }
     });
 
     if (!response.ok) {
-      throw new Error(`Auth API request failed: ${response.status}`);
+      throw new Error('Не удалось подтвердить вход');
     }
 
     if (response.status === 204) return null;
