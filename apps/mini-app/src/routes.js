@@ -3,7 +3,7 @@ export const routes = [
     id: 'orders',
     path: '/',
     label: 'Заказы',
-    icon: '01',
+    navSlot: 1,
     title: 'Заказы',
     access: { auth: true, roles: ['advertiser', 'creator'] },
     render: renderOrders,
@@ -13,7 +13,7 @@ export const routes = [
     path: '/deals',
     label: 'Сделки',
     creatorLabel: 'Мои сделки',
-    icon: '02',
+    navSlot: 2,
     title: 'Сделки',
     access: { auth: true, roles: ['advertiser', 'creator'] },
     render: renderDeals,
@@ -22,7 +22,7 @@ export const routes = [
     id: 'profile',
     path: '/profile',
     label: 'Профиль',
-    icon: '03',
+    navSlot: { advertiser: 4, creator: 3 },
     title: 'Профиль',
     access: { auth: true, roles: ['advertiser', 'creator'] },
     render: renderProfile,
@@ -31,7 +31,7 @@ export const routes = [
     id: 'settings',
     path: '/settings',
     label: 'Настройки',
-    icon: '04',
+    navSlot: { advertiser: 5, creator: 4 },
     title: 'Настройки',
     access: { auth: true, roles: ['advertiser', 'creator'] },
     render: renderSettings,
@@ -84,10 +84,6 @@ function renderOrders(context) {
 function renderAdvertiserOrders() {
   return `
     <section class="work-page">
-      <header class="page-head">
-        <p class="eyebrow">Заказы</p>
-        <h1>Сегодня</h1>
-      </header>
       <div class="metric-row">
         ${renderMetric('Активно', '0')}
         ${renderMetric('На проверке', '0')}
@@ -107,10 +103,6 @@ function renderAdvertiserOrders() {
 function renderCreatorOrders() {
   return `
     <section class="work-page">
-      <header class="page-head">
-        <p class="eyebrow">Заказы</p>
-        <h1>Лента задач</h1>
-      </header>
       <div class="metric-row">
         ${renderMetric('Подходят', '0')}
         ${renderMetric('Отклики', '0')}
@@ -131,10 +123,6 @@ function renderDeals(context) {
 
   return `
     <section class="work-page">
-      <header class="page-head">
-        <p class="eyebrow">${isCreator ? 'Мои сделки' : 'Сделки'}</p>
-        <h1>${isCreator ? 'Выполнение' : 'Контроль'}</h1>
-      </header>
       <div class="deal-list">
         ${renderDealRow('Ожидают старта', '0', 'Нет сделок с выбранным исполнителем.')}
         ${renderDealRow('В работе', '0', 'Активные задачи появятся после запуска.')}
@@ -147,10 +135,6 @@ function renderDeals(context) {
 function renderProfile(context) {
   return `
     <section class="work-page">
-      <header class="page-head">
-        <p class="eyebrow">Профиль</p>
-        <h1>Аккаунт</h1>
-      </header>
       ${renderUserCard(context.auth.me)}
       <div class="profile-grid">
         ${renderProfileItem('Роль', getRoleLabel(context.auth.me?.activeRole))}
@@ -165,13 +149,19 @@ function renderProfile(context) {
   `;
 }
 
-function renderSettings() {
+function renderSettings(context) {
   return `
     <section class="work-page">
-      <header class="page-head">
-        <p class="eyebrow">Настройки</p>
-        <h1>Параметры</h1>
-      </header>
+      <article class="theme-card">
+        <div>
+          <strong>Оформление</strong>
+          <p>Выберите комфортный режим интерфейса.</p>
+        </div>
+        <div class="theme-toggle" role="group" aria-label="Оформление">
+          ${renderThemeButton('dark', 'Темная', context.theme)}
+          ${renderThemeButton('light', 'Светлая', context.theme)}
+        </div>
+      </article>
       <div class="settings-list">
         <article><strong>Уведомления</strong><p>Дедлайны, новые заявки и решения по сделкам.</p></article>
         <article><strong>Безопасность</strong><p>Вход через Telegram включен.</p></article>
@@ -184,10 +174,6 @@ function renderSettings() {
 function renderCreate() {
   return `
     <section class="work-page">
-      <header class="page-head">
-        <p class="eyebrow">Новая задача</p>
-        <h1>Бриф</h1>
-      </header>
       <article class="focus-card">
         <span>Черновик</span>
         <strong>Подготовьте параметры заказа</strong>
@@ -214,10 +200,6 @@ function renderAuth(context) {
   if (context.auth.me) {
     return `
       <section class="work-page">
-        <header class="page-head">
-          <p class="eyebrow">Аккаунт</p>
-          <h1>Вход выполнен</h1>
-        </header>
         ${renderUserCard(context.auth.me)}
         <div class="profile-actions">
           <button class="primary-action" type="button" data-route="/role">Выбрать роль</button>
@@ -229,10 +211,6 @@ function renderAuth(context) {
 
   return `
     <section class="work-page auth-intro">
-      <header class="page-head">
-        <p class="eyebrow">Вход</p>
-        <h1>Продолжить</h1>
-      </header>
       <button class="primary-action" type="button" data-auth-action="telegram">Войти через Telegram</button>
     </section>
   `;
@@ -245,10 +223,6 @@ function renderRoleSelection(context) {
 
   return `
     <section class="work-page">
-      <header class="page-head">
-        <p class="eyebrow">Роль</p>
-        <h1>Выберите режим</h1>
-      </header>
       ${renderUserCard(context.auth.me)}
       <div class="role-grid">
         ${context.roleOptions
@@ -290,6 +264,14 @@ function renderDealRow(label, value, note) {
 
 function renderProfileItem(label, value) {
   return `<article><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></article>`;
+}
+
+function renderThemeButton(theme, label, activeTheme) {
+  return `
+    <button class="${theme === activeTheme ? 'active' : ''}" type="button" data-theme-choice="${theme}" aria-pressed="${theme === activeTheme ? 'true' : 'false'}">
+      ${escapeHtml(label)}
+    </button>
+  `;
 }
 
 function renderAuthState(kind, title, text, actionLabel = '', action = '') {

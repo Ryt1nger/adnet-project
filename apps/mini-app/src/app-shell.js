@@ -1,13 +1,19 @@
 import { initializeTelegramBoundary } from './telegram-webapp.js';
-import { findRoute, getRouteLabel, routes } from './routes.js?v=product-ui';
+import { findRoute, getRouteLabel, routes } from './routes.js?v=nav-icons';
 import { ROLE_OPTIONS } from './auth/api-contract.js';
 import { createAuthClient } from './auth/auth-client.js';
-import { createMockAuthAdapter } from './auth/mock-auth-adapter.js?v=product-ui';
-import { canAccessRoute, getAccessRedirect } from './auth/rbac.js?v=product-ui';
+import { createMockAuthAdapter } from './auth/mock-auth-adapter.js?v=nav-icons';
+import { canAccessRoute, getAccessRedirect } from './auth/rbac.js?v=nav-icons';
 import { createSessionStore } from './auth/session-store.js';
 
 const root = document.querySelector('#app-root');
 const nav = document.querySelector('[data-bottom-nav]');
+const navIndicator = document.createElement('span');
+const THEME_STORAGE_KEY = 'adnet.miniApp.theme';
+const THEME_OPTIONS = ['dark', 'light'];
+
+navIndicator.className = 'nav-focus-indicator';
+navIndicator.setAttribute('aria-hidden', 'true');
 
 const runtime = initializeTelegramBoundary();
 const authClient = createAuthClient({
@@ -21,6 +27,7 @@ const state = {
     me: null,
     errorMessage: '',
   },
+  theme: readSavedTheme(),
 };
 
 const context = {
@@ -30,7 +37,10 @@ const context = {
   authLabel: 'Проверяем вход',
   authHint: 'Подготавливаем ваш рабочий экран.',
   roleOptions: ROLE_OPTIONS,
+  theme: state.theme,
 };
+
+applyTheme(state.theme);
 
 function getCurrentPath() {
   const hash = window.location.hash.replace(/^#/, '');
@@ -68,12 +78,14 @@ function renderNavigation(activeRoute) {
   }
 
   nav.innerHTML = items.join('');
+  nav.prepend(navIndicator);
+  updateNavIndicator();
 }
 
 function renderNavItem(route, activeRoute, activeRole) {
   return `
-    <button class="nav-item ${route.id === activeRoute.id ? 'active' : ''}" type="button" data-path="${route.path}" aria-current="${route.id === activeRoute.id ? 'page' : 'false'}">
-      <span aria-hidden="true">${route.icon}</span>
+    <button class="nav-item ${route.id === activeRoute.id ? 'active' : ''}" type="button" data-path="${route.path}" aria-current="${route.id === activeRoute.id ? 'page' : 'false'}" style="--nav-slot: ${route.navSlot?.[activeRole] ?? route.navSlot ?? 1}">
+      <span aria-hidden="true">${renderNavIcon(route.id)}</span>
       <strong>${getRouteLabel(route, activeRole)}</strong>
     </button>
   `;
@@ -81,10 +93,57 @@ function renderNavItem(route, activeRoute, activeRole) {
 
 function renderCreateAction() {
   return `
-    <button class="nav-create" type="button" data-nav-action="create" aria-label="Новая задача">
+    <button class="nav-create" type="button" data-nav-action="create" aria-label="Новая задача" style="--nav-slot: 3">
       <span aria-hidden="true">+</span>
     </button>
   `;
+}
+
+function renderNavIcon(routeId) {
+  const icons = {
+    orders: `
+      <svg viewBox="0 0 24 24">
+        <path d="M7.5 5.5h9A2.5 2.5 0 0 1 19 8v10.5H5V8a2.5 2.5 0 0 1 2.5-2.5Z" />
+        <path d="M8 10h8" />
+        <path d="M8 14h5" />
+      </svg>
+    `,
+    deals: `
+      <svg viewBox="0 0 24 24">
+        <path d="M7.2 13.2 10.8 17a2.1 2.1 0 0 0 3 0l3-3" />
+        <path d="M8 12 5.7 9.7a2.2 2.2 0 0 1 0-3.1 2.2 2.2 0 0 1 3.1 0L12 9.8l3.2-3.2a2.2 2.2 0 0 1 3.1 3.1L16 12" />
+      </svg>
+    `,
+    profile: `
+      <svg viewBox="0 0 24 24">
+        <path d="M12 12a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+        <path d="M5.5 19a6.5 6.5 0 0 1 13 0" />
+      </svg>
+    `,
+    settings: `
+      <svg viewBox="0 0 24 24">
+        <path d="M12 8.5v-3" />
+        <path d="M12 18.5v-3" />
+        <path d="M7.5 12h-3" />
+        <path d="M19.5 12h-3" />
+        <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+      </svg>
+    `,
+  };
+
+  return icons[routeId] ?? icons.orders;
+}
+
+function updateNavIndicator() {
+  window.requestAnimationFrame(() => {
+    const activeItem = nav.querySelector('.nav-item.active');
+    if (!activeItem || nav.classList.contains('is-hidden')) return;
+    const activeBox = activeItem.getBoundingClientRect();
+    const navBox = nav.getBoundingClientRect();
+
+    nav.style.setProperty('--nav-indicator-x', `${activeBox.left - navBox.left}px`);
+    nav.style.setProperty('--nav-indicator-width', `${activeBox.width}px`);
+  });
 }
 
 function render() {
@@ -103,6 +162,35 @@ function render() {
       : route.render(context);
   renderNavigation(route);
   root.focus({ preventScroll: true });
+}
+
+function readSavedTheme() {
+  try {
+    const savedTheme = window.localStorage?.getItem(THEME_STORAGE_KEY);
+    return THEME_OPTIONS.includes(savedTheme) ? savedTheme : 'dark';
+  } catch {
+    return 'dark';
+  }
+}
+
+function setTheme(theme) {
+  if (!THEME_OPTIONS.includes(theme)) return;
+  state.theme = theme;
+  applyTheme(theme);
+
+  try {
+    window.localStorage?.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // Theme persistence is a local enhancement; the app stays usable without storage.
+  }
+
+  syncContext();
+  render();
+}
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  document.documentElement.style.colorScheme = theme;
 }
 
 async function restoreSession() {
@@ -155,6 +243,7 @@ function syncContext() {
   context.auth = state.auth;
   context.authLabel = getAuthLabel();
   context.authHint = getAuthHint();
+  context.theme = state.theme;
 }
 
 function getAuthLabel() {
@@ -217,6 +306,12 @@ root.addEventListener('click', (event) => {
   const routeButton = event.target.closest('[data-route]');
   if (routeButton) {
     navigate(routeButton.dataset.route);
+    return;
+  }
+
+  const themeButton = event.target.closest('[data-theme-choice]');
+  if (themeButton) {
+    setTheme(themeButton.dataset.themeChoice);
   }
 });
 
@@ -227,5 +322,6 @@ function handleAuthAction(action) {
 }
 
 window.addEventListener('hashchange', render);
+window.addEventListener('resize', updateNavIndicator);
 
 restoreSession();

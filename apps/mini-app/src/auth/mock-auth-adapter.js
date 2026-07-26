@@ -1,6 +1,7 @@
 import { isKnownRole, normalizeAuthSession, normalizeMe } from './api-contract.js';
 
 const PREVIEW_TOKEN = 'adnet-session-token';
+const PREVIEW_ROLE_KEY = 'adnet.miniApp.previewRole';
 
 export function createMockAuthAdapter() {
   let me = null;
@@ -27,6 +28,7 @@ export function createMockAuthAdapter() {
     async selectRole(role) {
       if (!me) throw new Error('Session is required before role selection');
       if (!isKnownRole(role)) throw new Error('Выберите доступную роль');
+      writePreviewRole(role);
       me = {
         ...me,
         roles: Array.from(new Set([...me.roles, role])),
@@ -42,6 +44,8 @@ export function createMockAuthAdapter() {
 }
 
 function createPreviewUser() {
+  const activeRole = readPreviewRole();
+
   return {
     id: 'adnet-user',
     telegramUser: {
@@ -49,8 +53,25 @@ function createPreviewUser() {
       firstName: 'Adnet',
       username: 'adnet_user',
     },
-    roles: ['advertiser'],
-    activeRole: 'advertiser',
+    roles: [activeRole],
+    activeRole,
     sessionStatus: 'active',
   };
+}
+
+function readPreviewRole() {
+  try {
+    const savedRole = window.localStorage?.getItem(PREVIEW_ROLE_KEY);
+    return isKnownRole(savedRole) ? savedRole : 'advertiser';
+  } catch {
+    return 'advertiser';
+  }
+}
+
+function writePreviewRole(role) {
+  try {
+    window.localStorage?.setItem(PREVIEW_ROLE_KEY, role);
+  } catch {
+    // Preview role persistence is optional; role selection still works in memory.
+  }
 }
