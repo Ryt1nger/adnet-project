@@ -1,9 +1,9 @@
 import { initializeTelegramBoundary } from './telegram-webapp.js';
-import { findRoute, getRouteLabel, routes } from './routes.js?v=nav-icons';
+import { findRoute, getRouteLabel, routes } from './routes.js?v=briefcase-icon';
 import { ROLE_OPTIONS } from './auth/api-contract.js';
 import { createAuthClient } from './auth/auth-client.js';
-import { createMockAuthAdapter } from './auth/mock-auth-adapter.js?v=nav-icons';
-import { canAccessRoute, getAccessRedirect } from './auth/rbac.js?v=nav-icons';
+import { createMockAuthAdapter } from './auth/mock-auth-adapter.js?v=briefcase-icon';
+import { canAccessRoute, getAccessRedirect } from './auth/rbac.js?v=briefcase-icon';
 import { createSessionStore } from './auth/session-store.js';
 
 const root = document.querySelector('#app-root');
@@ -103,30 +103,37 @@ function renderNavIcon(routeId) {
   const icons = {
     orders: `
       <svg viewBox="0 0 24 24">
-        <path d="M7.5 5.5h9A2.5 2.5 0 0 1 19 8v10.5H5V8a2.5 2.5 0 0 1 2.5-2.5Z" />
-        <path d="M8 10h8" />
-        <path d="M8 14h5" />
+        <path d="M7 4.75h7.1L18 8.65v9.6a1.75 1.75 0 0 1-1.75 1.75H7.75A1.75 1.75 0 0 1 6 18.25V6.5A1.75 1.75 0 0 1 7.75 4.75Z" />
+        <path d="M14 4.9V8.8h3.85" />
+        <path d="M9 12h6" />
+        <path d="M9 15.5h5" />
       </svg>
     `,
     deals: `
       <svg viewBox="0 0 24 24">
-        <path d="M7.2 13.2 10.8 17a2.1 2.1 0 0 0 3 0l3-3" />
-        <path d="M8 12 5.7 9.7a2.2 2.2 0 0 1 0-3.1 2.2 2.2 0 0 1 3.1 0L12 9.8l3.2-3.2a2.2 2.2 0 0 1 3.1 3.1L16 12" />
+        <path d="M8.25 8V6.75A1.75 1.75 0 0 1 10 5h4a1.75 1.75 0 0 1 1.75 1.75V8" />
+        <path d="M5.75 8h12.5A1.75 1.75 0 0 1 20 9.75v7.5A1.75 1.75 0 0 1 18.25 19H5.75A1.75 1.75 0 0 1 4 17.25v-7.5A1.75 1.75 0 0 1 5.75 8Z" />
+        <path d="M4 12.25h16" />
+        <path d="M10 12.25v1.25h4v-1.25" />
       </svg>
     `,
     profile: `
       <svg viewBox="0 0 24 24">
-        <path d="M12 12a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
-        <path d="M5.5 19a6.5 6.5 0 0 1 13 0" />
+        <path d="M12 11.75a3.6 3.6 0 1 0 0-7.2 3.6 3.6 0 0 0 0 7.2Z" />
+        <path d="M5.75 19.25a6.25 6.25 0 0 1 12.5 0" />
       </svg>
     `,
     settings: `
       <svg viewBox="0 0 24 24">
-        <path d="M12 8.5v-3" />
-        <path d="M12 18.5v-3" />
-        <path d="M7.5 12h-3" />
-        <path d="M19.5 12h-3" />
-        <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+        <path d="M5 7h8" />
+        <path d="M17 7h2" />
+        <path d="M5 12h3" />
+        <path d="M12 12h7" />
+        <path d="M5 17h7" />
+        <path d="M16 17h3" />
+        <path d="M13 5.5v3" />
+        <path d="M9 10.5v3" />
+        <path d="M13 15.5v3" />
       </svg>
     `,
   };
