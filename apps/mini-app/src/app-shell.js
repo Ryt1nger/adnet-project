@@ -1,9 +1,9 @@
 import { initializeTelegramBoundary } from './telegram-webapp.js';
-import { findRoute, getRouteLabel, routes } from './routes.js?v=settings-interactive';
+import { findRoute, getRouteLabel, routes } from './routes.js?v=settings-accordion';
 import { ROLE_OPTIONS } from './auth/api-contract.js';
 import { createAuthClient } from './auth/auth-client.js';
-import { createMockAuthAdapter } from './auth/mock-auth-adapter.js?v=settings-interactive';
-import { canAccessRoute, getAccessRedirect } from './auth/rbac.js?v=settings-interactive';
+import { createMockAuthAdapter } from './auth/mock-auth-adapter.js?v=settings-accordion';
+import { canAccessRoute, getAccessRedirect } from './auth/rbac.js?v=settings-accordion';
 import { createSessionStore } from './auth/session-store.js';
 
 const root = document.querySelector('#app-root');

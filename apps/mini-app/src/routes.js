@@ -247,11 +247,10 @@ function renderSettingsAccount(context) {
     'Аккаунт и доступ',
     `
       <div class="settings-detail-list">
-        ${renderSettingsActionRow('telegram-account', 'Telegram-аккаунт', `${escapeHtml(me?.telegramUser.firstName ?? 'Пользователь')} · ${username}`, 'Открыть')}
+        ${renderSettingsActionRow('telegram-account', 'Telegram-аккаунт', `${escapeHtml(me?.telegramUser.firstName ?? 'Пользователь')} · ${username}`, 'Открыть', context.settingsPanel)}
         ${renderRouteActionRow('/role', 'Роль в Adnet', getRoleLabel(me?.activeRole), 'Изменить')}
-        ${renderSettingsActionRow('login-security', 'Безопасность входа', 'Вход выполняется через Telegram.', 'Проверить')}
+        ${renderSettingsActionRow('login-security', 'Безопасность входа', 'Вход выполняется через Telegram.', 'Проверить', context.settingsPanel)}
       </div>
-      ${renderSettingsPanel(context.settingsPanel)}
       <article class="session-card compact-session">
         <span>Текущая сессия</span>
         <strong>Это устройство</strong>
@@ -259,7 +258,7 @@ function renderSettingsAccount(context) {
       </article>
       ${
         otherSessions.length
-          ? `<div class="settings-detail-list">${otherSessions.map((session) => renderSettingsActionRow(session.id, session.title, session.text, 'Открыть')).join('')}</div>`
+          ? `<div class="settings-detail-list">${otherSessions.map((session) => renderSettingsActionRow(session.id, session.title, session.text, 'Открыть', context.settingsPanel)).join('')}</div>`
           : ''
       }
     `
@@ -304,10 +303,9 @@ function renderSettingsPayments(context) {
     `
       <div class="settings-detail-list">
         ${rows
-          .map(([label, text, status]) => renderSettingsActionRow(`payment-${slugify(label)}`, label, text, status))
+          .map(([label, text, status]) => renderSettingsActionRow(`payment-${slugify(label)}`, label, text, status, context.settingsPanel))
           .join('')}
       </div>
-      ${renderSettingsPanel(context.settingsPanel)}
     `
   );
 }
@@ -317,10 +315,9 @@ function renderSettingsPrivacy(context) {
     'Приватность и данные',
     `
       <div class="settings-detail-list">
-        ${renderSettingsActionRow('telegram-data', 'Данные Telegram', 'Имя, username и идентификатор для входа.', 'Открыть')}
-        ${renderSettingsActionRow('activity-history', 'История действий, изменений и проверок', 'Ключевые события аккаунта и сделок.', 'Открыть')}
+        ${renderSettingsActionRow('telegram-data', 'Данные Telegram', 'Имя, username и идентификатор для входа.', 'Открыть', context.settingsPanel)}
+        ${renderSettingsActionRow('activity-history', 'История действий, изменений и проверок', 'Ключевые события аккаунта и сделок.', 'Открыть', context.settingsPanel)}
       </div>
-      ${renderSettingsPanel(context.settingsPanel)}
     `
   );
 }
@@ -356,13 +353,12 @@ function renderSettingsDocuments(context) {
     'Документы сервиса',
     `
       <div class="settings-detail-list">
-        ${renderSettingsActionRow('rules-doc', 'Правила платформы', 'Порядок работы заказчиков и исполнителей.', 'Открыть')}
-        ${renderSettingsActionRow('terms-doc', 'Условия сервиса', 'Общие условия использования Adnet.', 'Открыть')}
-        ${renderSettingsActionRow('data-doc', 'Политика данных', 'Как хранятся и используются данные аккаунта.', 'Открыть')}
-        ${renderSettingsActionRow('payment-doc', 'Платежные правила', 'Резервирование, приемка, выплаты и возвраты.', 'Открыть')}
-        ${renderSettingsActionRow('user-docs', 'Документы пользователя', 'Файлы и подтверждения, которые могут понадобиться для работы.', 'Открыть')}
+        ${renderSettingsActionRow('rules-doc', 'Правила платформы', 'Порядок работы заказчиков и исполнителей.', 'Открыть', context.settingsPanel)}
+        ${renderSettingsActionRow('terms-doc', 'Условия сервиса', 'Общие условия использования Adnet.', 'Открыть', context.settingsPanel)}
+        ${renderSettingsActionRow('data-doc', 'Политика данных', 'Как хранятся и используются данные аккаунта.', 'Открыть', context.settingsPanel)}
+        ${renderSettingsActionRow('payment-doc', 'Платежные правила', 'Резервирование, приемка, выплаты и возвраты.', 'Открыть', context.settingsPanel)}
+        ${renderSettingsActionRow('user-docs', 'Документы пользователя', 'Файлы и подтверждения, которые могут понадобиться для работы.', 'Открыть', context.settingsPanel)}
       </div>
-      ${renderSettingsPanel(context.settingsPanel)}
     `
   );
 }
@@ -372,14 +368,13 @@ function renderSettingsActions(context) {
     'Действия аккаунта',
     `
       <div class="settings-detail-list">
-        ${renderSettingsActionRow('role-action', 'Текущая роль', getRoleLabel(context.auth.me?.activeRole), 'Изменить')}
-        ${renderSettingsActionRow('session-action', 'Сессия', 'Вы вошли через Telegram на этом устройстве.', 'Управлять')}
+        ${renderSettingsActionRow('role-action', 'Текущая роль', getRoleLabel(context.auth.me?.activeRole), 'Изменить', context.settingsPanel)}
+        ${renderSettingsActionRow('session-action', 'Сессия', 'Вы вошли через Telegram на этом устройстве.', 'Управлять', context.settingsPanel)}
       </div>
       <div class="settings-actions-grid">
         <button class="primary-action" type="button" data-confirm-action="role">Сменить роль</button>
         <button class="ghost-action danger-action" type="button" data-confirm-action="logout">Выйти</button>
       </div>
-      ${renderSettingsPanel(context.settingsPanel)}
       ${renderConfirmation(context.confirmAction)}
     `
   );
@@ -512,15 +507,20 @@ function renderSettingsDetail(title, content) {
   `;
 }
 
-function renderSettingsActionRow(panel, label, text, actionLabel) {
+function renderSettingsActionRow(panel, label, text, actionLabel, activePanel = '') {
+  const isOpen = panel === activePanel;
+
   return `
-    <button class="settings-detail-row settings-action-row" type="button" data-settings-panel="${escapeHtml(panel)}">
-      <div>
-        <strong>${escapeHtml(label)}</strong>
-        <p>${escapeHtml(text)}</p>
-      </div>
-      <span>${escapeHtml(actionLabel)}</span>
-    </button>
+    <article class="settings-inline-item">
+      <button class="settings-detail-row settings-action-row" type="button" data-settings-panel="${escapeHtml(panel)}" aria-expanded="${isOpen ? 'true' : 'false'}">
+        <div>
+          <strong>${escapeHtml(label)}</strong>
+          <p>${escapeHtml(text)}</p>
+        </div>
+        <span>${escapeHtml(actionLabel)}</span>
+      </button>
+      ${isOpen ? renderSettingsPanel(panel) : ''}
+    </article>
   `;
 }
 
