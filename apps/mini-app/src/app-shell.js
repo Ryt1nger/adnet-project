@@ -1,4 +1,4 @@
-import { initializeTelegramBoundary } from './telegram-webapp.js';
+import { initializeTelegramBoundary } from './telegram-webapp.js?v=advertiser-profile-v5';
 import { findRoute, getRouteLabel, getRouteTitle, routes } from './routes.js?v=advertiser-profile-v3';
 import { ROLE_OPTIONS } from './auth/api-contract.js';
 import { createAuthClient } from './auth/auth-client.js';

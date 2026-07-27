@@ -1364,9 +1364,9 @@ button.settings-detail-row {
 
 .bottom-nav {
   position: fixed;
-  right: calc(50% - min(240px, 50vw) + 28px + var(--safe-right));
+  right: calc(50% - min(240px, 50vw) + 14px + var(--safe-right));
   bottom: calc(14px + var(--safe-bottom));
-  left: calc(50% - min(240px, 50vw) + 28px + var(--safe-left));
+  left: calc(50% - min(240px, 50vw) + 14px + var(--safe-left));
   z-index: 20;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1440,9 +1440,8 @@ button.settings-detail-row {
 .nav-item strong {
   max-width: 100%;
   overflow: hidden;
-  font-size: 8.5px;
+  font-size: 9px;
   font-weight: 700;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
