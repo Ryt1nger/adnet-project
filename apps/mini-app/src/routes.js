@@ -30,6 +30,15 @@ export const routes = [
     render: renderProfile,
   },
   {
+    id: 'profile-edit',
+    path: '/profile/edit',
+    label: 'Редактирование профиля',
+    title: 'Редактирование профиля',
+    nav: false,
+    access: { auth: true, roles: ['advertiser'] },
+    render: renderAdvertiserProfileEdit,
+  },
+  {
     id: 'settings',
     path: '/settings',
     label: 'Настройки',
@@ -203,6 +212,30 @@ function renderDeals(context) {
 }
 
 function renderProfile(context) {
+  if (context.auth.me?.activeRole === 'advertiser') return renderAdvertiserProfile(context);
+  return renderCreatorProfile(context);
+}
+
+function renderAdvertiserProfile(context) {
+  const profile = context.advertiserProfile;
+  const isComplete = isAdvertiserProfileComplete(profile);
+
+  return `
+    <section class="work-page advertiser-profile-page">
+      ${isComplete ? renderAdvertiserProfileCard(profile, 'public') : renderAdvertiserProfileSetup(profile)}
+      <div class="profile-actions single-action">
+        <button class="primary-action" type="button" data-route="/profile/edit">${isComplete ? 'Редактировать профиль' : 'Заполнить профиль'}</button>
+      </div>
+      <div class="profile-grid">
+        ${renderProfileItem('Статус', getVerificationLabel(profile.verificationStatus))}
+        ${renderProfileItem('Категория', profile.category || 'Не выбрана')}
+        ${renderProfileItem('Видимость', getVisibilityLabel(profile.visibility))}
+      </div>
+    </section>
+  `;
+}
+
+function renderCreatorProfile(context) {
   return `
     <section class="work-page">
       ${renderUserCard(context.auth.me)}
@@ -214,6 +247,61 @@ function renderProfile(context) {
       <div class="profile-actions">
         <button class="primary-action" type="button" data-route="/role">Сменить роль</button>
         <button class="ghost-action" type="button" data-auth-action="logout">Выйти</button>
+      </div>
+    </section>
+  `;
+}
+
+function renderAdvertiserProfileEdit(context) {
+  const profile = context.advertiserProfileDraft ?? context.advertiserProfile;
+  const errors = context.profileEditErrors ?? {};
+
+  return `
+    <section class="work-page profile-edit-page">
+      <button class="settings-back" type="button" data-profile-action="cancel" aria-label="Назад к профилю">
+        <span aria-hidden="true">←</span>
+        <strong>Редактировать профиль</strong>
+      </button>
+      ${errors.form ? `<article class="form-error">${escapeHtml(errors.form)}</article>` : ''}
+      <form class="profile-edit-form" data-profile-edit-form>
+        <article class="profile-avatar-editor">
+          ${renderAdvertiserAvatar(profile, 'large')}
+          <div>
+            <strong>Логотип компании</strong>
+            <p>${profile.avatarName ? escapeHtml(profile.avatarName) : 'PNG, JPG или WebP до 1.2 МБ.'}</p>
+            <label class="file-picker">
+              <input type="file" accept="image/png,image/jpeg,image/webp" data-profile-avatar-input />
+              Выбрать изображение
+            </label>
+            ${renderFieldError(errors.avatar)}
+          </div>
+        </article>
+        ${renderTextField('companyName', 'Название компании', profile.companyName, 'Например: название бренда', 60, errors.companyName)}
+        ${renderTextareaField('description', 'Короткое описание', profile.description, 220, errors.description)}
+        ${renderTextField('link', 'Сайт или Telegram', profile.link, 'https://site.ru или t.me/channel', 90, errors.link)}
+        ${renderCategoryField(profile.category, errors.category)}
+        ${renderChoiceField(
+          'visibility',
+          'Видимость профиля',
+          [
+            ['hidden', 'Скрыт'],
+            ['visible', 'Показывать исполнителям'],
+          ],
+          profile.visibility
+        )}
+        ${renderChoiceField(
+          'verificationStatus',
+          'Статус проверки',
+          [
+            ['not_submitted', 'Черновик'],
+            ['ready', 'Готов к проверке'],
+          ],
+          profile.verificationStatus
+        )}
+      </form>
+      <div class="profile-actions">
+        <button class="ghost-action" type="button" data-profile-action="cancel">Отмена</button>
+        <button class="primary-action" type="button" data-profile-action="save" ${isAdvertiserProfileComplete(profile) ? '' : 'disabled'}>Сохранить</button>
       </div>
     </section>
   `;
@@ -481,6 +569,160 @@ function renderDealRow(label, value, note) {
 
 function renderProfileItem(label, value) {
   return `<article><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></article>`;
+}
+
+function renderAdvertiserProfileSetup(profile) {
+  return `
+    <article class="advertiser-setup-card">
+      ${renderAdvertiserAvatar(profile)}
+      <div>
+        <span>Профиль компании</span>
+        <strong>Заполните данные для исполнителей</strong>
+        <p>Добавьте название, описание, ссылку, категорию и настройте видимость.</p>
+      </div>
+    </article>
+  `;
+}
+
+function renderAdvertiserProfileCard(profile, mode = 'public') {
+  const linkHref = getProfileLinkHref(profile.link);
+
+  return `
+    <article class="advertiser-public-card ${mode === 'compact' ? 'compact-preview' : ''}">
+      <div class="advertiser-profile-head">
+        ${renderAdvertiserAvatar(profile)}
+        <div>
+          <span>Профиль компании</span>
+          <strong>${escapeHtml(profile.companyName)}</strong>
+          <em>${escapeHtml(getVerificationLabel(profile.verificationStatus))}</em>
+        </div>
+      </div>
+      <p>${escapeHtml(profile.description)}</p>
+      <div class="advertiser-profile-meta">
+        <span>${escapeHtml(profile.category)}</span>
+        <span>${escapeHtml(getVisibilityLabel(profile.visibility))}</span>
+        <a href="${escapeHtml(linkHref)}" target="_blank" rel="noreferrer">${escapeHtml(profile.link)}</a>
+      </div>
+    </article>
+  `;
+}
+
+function renderAdvertiserAvatar(profile, size = '') {
+  const initials = getInitials(profile.companyName);
+  const sizeClass = size === 'large' ? 'large-avatar' : '';
+
+  if (profile.avatarDataUrl) {
+    return `
+      <div class="advertiser-avatar ${sizeClass}">
+        <img src="${escapeHtml(profile.avatarDataUrl)}" alt="${escapeHtml(profile.companyName)}" />
+      </div>
+    `;
+  }
+
+  return `<div class="advertiser-avatar ${sizeClass}" aria-hidden="true">${escapeHtml(initials)}</div>`;
+}
+
+function renderTextField(name, label, value, placeholder, maxLength, error = '') {
+  return `
+    <label class="profile-field">
+      <span>${escapeHtml(label)}</span>
+      <input name="${escapeHtml(name)}" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}" maxlength="${maxLength}" />
+      <small>${escapeHtml(String(value).length)} / ${maxLength}</small>
+      ${renderFieldError(error)}
+    </label>
+  `;
+}
+
+function renderTextareaField(name, label, value, maxLength, error = '') {
+  return `
+    <label class="profile-field">
+      <span>${escapeHtml(label)}</span>
+      <textarea name="${escapeHtml(name)}" maxlength="${maxLength}" rows="4">${escapeHtml(value)}</textarea>
+      <small>${escapeHtml(String(value).length)} / ${maxLength}</small>
+      ${renderFieldError(error)}
+    </label>
+  `;
+}
+
+function renderCategoryField(value, error = '') {
+  const categories = ['Медиа и контент', 'E-commerce', 'Образование', 'Финансы', 'Локальный бизнес', 'Технологии'];
+
+  return `
+    <article class="profile-field profile-category-field">
+      <span>Категория</span>
+      <input type="hidden" name="category" value="${escapeHtml(value)}" />
+      <div class="profile-category-grid" role="group" aria-label="Выберите категорию">
+        ${categories
+          .map(
+            (category) => `
+              <button class="${category === value ? 'active' : ''}" type="button" data-profile-category="${escapeHtml(category)}" aria-pressed="${category === value}">
+                ${escapeHtml(category)}
+              </button>
+            `
+          )
+          .join('')}
+      </div>
+      ${renderFieldError(error)}
+    </article>
+  `;
+}
+
+function renderChoiceField(name, label, options, activeValue) {
+  return `
+    <article class="profile-field">
+      <span>${escapeHtml(label)}</span>
+      <div class="profile-choice-grid">
+        ${options
+          .map(
+            ([value, text]) => `
+              <label>
+                <input type="radio" name="${escapeHtml(name)}" value="${escapeHtml(value)}" ${value === activeValue ? 'checked' : ''} />
+                ${escapeHtml(text)}
+              </label>
+            `
+          )
+          .join('')}
+      </div>
+    </article>
+  `;
+}
+
+function renderFieldError(error = '') {
+  return error ? `<strong class="field-error">${escapeHtml(error)}</strong>` : '';
+}
+
+function getProfileLinkHref(link) {
+  if (!link) return '';
+  if (link.startsWith('@')) return `https://t.me/${link.slice(1)}`;
+  if (/^https?:\/\//.test(link)) return link;
+  return '';
+}
+
+function getInitials(value) {
+  return String(value)
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || 'AD';
+}
+
+function isAdvertiserProfileComplete(profile) {
+  return Boolean(profile.companyName && profile.description && profile.link && isProfileLinkValid(profile.link) && profile.category);
+}
+
+function isProfileLinkValid(link) {
+  return /^(https?:\/\/[^\s.]+\.[^\s]{2,}|https?:\/\/t\.me\/[A-Za-z0-9_]{5,}|@[A-Za-z0-9_]{5,})$/.test(link);
+}
+
+function getVisibilityLabel(value) {
+  return value === 'visible' ? 'Показывать исполнителям' : 'Скрыт';
+}
+
+function getVerificationLabel(value) {
+  return value === 'ready' ? 'Готов к проверке' : 'Черновик';
 }
 
 function renderThemeButton(theme, label, activeTheme) {

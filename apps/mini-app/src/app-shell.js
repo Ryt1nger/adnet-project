@@ -1,9 +1,9 @@
 import { initializeTelegramBoundary } from './telegram-webapp.js';
-import { findRoute, getRouteLabel, getRouteTitle, routes } from './routes.js?v=campaigns-label';
+import { findRoute, getRouteLabel, getRouteTitle, routes } from './routes.js?v=advertiser-profile-v3';
 import { ROLE_OPTIONS } from './auth/api-contract.js';
 import { createAuthClient } from './auth/auth-client.js';
-import { createMockAuthAdapter } from './auth/mock-auth-adapter.js?v=campaigns-label';
-import { canAccessRoute, getAccessRedirect } from './auth/rbac.js?v=campaigns-label';
+import { createMockAuthAdapter } from './auth/mock-auth-adapter.js?v=advertiser-profile-v3';
+import { canAccessRoute, getAccessRedirect } from './auth/rbac.js?v=advertiser-profile-v3';
 import { createSessionStore } from './auth/session-store.js';
 
 const root = document.querySelector('#app-root');
@@ -11,6 +11,8 @@ const nav = document.querySelector('[data-bottom-nav]');
 const navIndicator = document.createElement('span');
 const THEME_STORAGE_KEY = 'adnet.miniApp.theme';
 const SETTINGS_PREFS_STORAGE_KEY = 'adnet.miniApp.settingsPrefs';
+const ADVERTISER_PROFILE_STORAGE_KEY = 'adnet.miniApp.advertiserProfile.v2';
+const MAX_PROFILE_IMAGE_BYTES = 1200 * 1024;
 const THEME_OPTIONS = ['dark', 'light'];
 
 navIndicator.className = 'nav-focus-indicator';
@@ -32,6 +34,9 @@ const state = {
   settingsPrefs: readSavedSettingsPrefs(),
   settingsPanel: '',
   confirmAction: '',
+  advertiserProfile: readSavedAdvertiserProfile(),
+  advertiserProfileDraft: null,
+  profileEditErrors: {},
 };
 
 const context = {
@@ -45,6 +50,9 @@ const context = {
   settingsPrefs: state.settingsPrefs,
   settingsPanel: state.settingsPanel,
   confirmAction: state.confirmAction,
+  advertiserProfile: state.advertiserProfile,
+  advertiserProfileDraft: state.advertiserProfileDraft,
+  profileEditErrors: state.profileEditErrors,
 };
 
 applyTheme(state.theme);
@@ -57,6 +65,13 @@ function getCurrentPath() {
 function navigate(path) {
   state.settingsPanel = '';
   state.confirmAction = '';
+  state.profileEditErrors = {};
+
+  if (path === '/profile/edit') {
+    state.advertiserProfileDraft = cloneProfile(state.advertiserProfile);
+  } else if (!path.startsWith('/profile/edit')) {
+    state.advertiserProfileDraft = null;
+  }
 
   if (getCurrentPath() === path) {
     render();
@@ -93,7 +108,10 @@ function renderNavigation(activeRoute) {
 }
 
 function renderNavItem(route, activeRoute, activeRole) {
-  const isActive = route.id === activeRoute.id || (activeRoute.id.startsWith('settings-') && route.id === 'settings');
+  const isActive =
+    route.id === activeRoute.id ||
+    (activeRoute.id.startsWith('settings-') && route.id === 'settings') ||
+    (activeRoute.id.startsWith('profile-') && route.id === 'profile');
 
   return `
     <button class="nav-item ${isActive ? 'active' : ''}" type="button" data-path="${route.path}" aria-current="${isActive ? 'page' : 'false'}" style="--nav-slot: ${route.navSlot?.[activeRole] ?? route.navSlot ?? 1}">
@@ -228,6 +246,68 @@ function persistSettingsPrefs() {
   }
 }
 
+function getDefaultAdvertiserProfile() {
+  return {
+    companyName: '',
+    description: '',
+    link: '',
+    category: '',
+    visibility: 'hidden',
+    verificationStatus: 'not_submitted',
+    avatarDataUrl: '',
+    avatarName: '',
+  };
+}
+
+function readSavedAdvertiserProfile() {
+  const defaults = getDefaultAdvertiserProfile();
+
+  try {
+    const savedProfile = JSON.parse(window.localStorage?.getItem(ADVERTISER_PROFILE_STORAGE_KEY) ?? '{}');
+    if (isLegacyMockAdvertiserProfile(savedProfile)) return defaults;
+    return normalizeAdvertiserProfile({ ...defaults, ...savedProfile });
+  } catch {
+    return defaults;
+  }
+}
+
+function persistAdvertiserProfile() {
+  try {
+    window.localStorage?.setItem(ADVERTISER_PROFILE_STORAGE_KEY, JSON.stringify(state.advertiserProfile));
+  } catch {
+    state.profileEditErrors = {
+      form: 'Не удалось сохранить профиль локально. Попробуйте уменьшить изображение.',
+    };
+  }
+}
+
+function normalizeAdvertiserProfile(profile) {
+  return {
+    ...getDefaultAdvertiserProfile(),
+    ...profile,
+    companyName: String(profile.companyName ?? '').slice(0, 60),
+    description: String(profile.description ?? '').slice(0, 220),
+    link: String(profile.link ?? '').slice(0, 90),
+    category: String(profile.category ?? ''),
+    visibility: ['visible', 'hidden'].includes(profile.visibility) ? profile.visibility : 'hidden',
+    verificationStatus: ['not_submitted', 'ready'].includes(profile.verificationStatus) ? profile.verificationStatus : 'not_submitted',
+    avatarDataUrl: String(profile.avatarDataUrl ?? ''),
+    avatarName: String(profile.avatarName ?? ''),
+  };
+}
+
+function cloneProfile(profile) {
+  return normalizeAdvertiserProfile({ ...profile });
+}
+
+function isLegacyMockAdvertiserProfile(profile) {
+  return (
+    profile?.companyName === 'Adnet' &&
+    profile?.link === '@adnet' &&
+    (profile?.category === 'Telegram-реклама' || profile?.verificationStatus === 'На проверке')
+  );
+}
+
 function setTheme(theme) {
   if (!THEME_OPTIONS.includes(theme)) return;
   state.theme = theme;
@@ -302,6 +382,9 @@ function syncContext() {
   context.settingsPrefs = state.settingsPrefs;
   context.settingsPanel = state.settingsPanel;
   context.confirmAction = state.confirmAction;
+  context.advertiserProfile = state.advertiserProfile;
+  context.advertiserProfileDraft = state.advertiserProfileDraft;
+  context.profileEditErrors = state.profileEditErrors;
 }
 
 function getAuthLabel() {
@@ -419,7 +502,41 @@ root.addEventListener('click', (event) => {
   const confirmAccept = event.target.closest('[data-confirm-accept]');
   if (confirmAccept) {
     handleConfirmedAction(confirmAccept.dataset.confirmAccept);
+    return;
   }
+
+  const profileCategory = event.target.closest('[data-profile-category]');
+  if (profileCategory) {
+    selectAdvertiserProfileCategory(profileCategory.dataset.profileCategory);
+    return;
+  }
+
+  const profileAction = event.target.closest('[data-profile-action]');
+  if (profileAction) {
+    handleProfileAction(profileAction.dataset.profileAction);
+  }
+});
+
+root.addEventListener('change', (event) => {
+  const avatarInput = event.target.closest('[data-profile-avatar-input]');
+  if (avatarInput) {
+    handleProfileAvatarInput(avatarInput);
+    return;
+  }
+
+  if (event.target.closest('[data-profile-edit-form]')) {
+    syncAdvertiserProfileDraftFromForm();
+
+    if (event.target.matches('input[type="radio"]')) {
+      syncContext();
+      render();
+    }
+  }
+});
+
+root.addEventListener('input', (event) => {
+  if (!event.target.closest('[data-profile-edit-form]')) return;
+  syncAdvertiserProfileDraftFromForm();
 });
 
 function toggleSetting(key) {
@@ -457,6 +574,166 @@ function handleConfirmedAction(action) {
     state.confirmAction = '';
     navigate('/role');
   }
+}
+
+function handleProfileAction(action) {
+  if (action === 'cancel') {
+    state.advertiserProfileDraft = null;
+    state.profileEditErrors = {};
+    navigate('/profile');
+    return;
+  }
+
+  if (action === 'save') {
+    syncAdvertiserProfileDraftFromForm();
+    saveAdvertiserProfile();
+  }
+}
+
+function selectAdvertiserProfileCategory(category) {
+  if (!category) return;
+
+  state.advertiserProfileDraft = normalizeAdvertiserProfile({
+    ...(state.advertiserProfileDraft ?? cloneProfile(state.advertiserProfile)),
+    category,
+  });
+  state.profileEditErrors = {
+    ...state.profileEditErrors,
+    category: '',
+  };
+  syncContext();
+  render();
+}
+
+function syncAdvertiserProfileDraftFromForm() {
+  const form = root.querySelector('[data-profile-edit-form]');
+  if (!form) return;
+
+  const formData = new FormData(form);
+  state.advertiserProfileDraft = normalizeAdvertiserProfile({
+    ...(state.advertiserProfileDraft ?? cloneProfile(state.advertiserProfile)),
+    companyName: String(formData.get('companyName') ?? '').trim(),
+    description: String(formData.get('description') ?? '').trim(),
+    link: String(formData.get('link') ?? '').trim(),
+    category: String(formData.get('category') ?? '').trim(),
+    visibility: String(formData.get('visibility') ?? 'hidden'),
+    verificationStatus: String(formData.get('verificationStatus') ?? 'not_submitted'),
+  });
+
+  const saveButton = root.querySelector('[data-profile-action="save"]');
+  if (saveButton) {
+    saveButton.disabled = !isAdvertiserProfileSubmittable(state.advertiserProfileDraft);
+  }
+}
+
+function saveAdvertiserProfile() {
+  const form = root.querySelector('[data-profile-edit-form]');
+  if (!form) return;
+
+  const formData = new FormData(form);
+  const draft = state.advertiserProfileDraft ?? cloneProfile(state.advertiserProfile);
+  const nextProfile = normalizeAdvertiserProfile({
+    ...draft,
+    companyName: String(formData.get('companyName') ?? '').trim(),
+    description: String(formData.get('description') ?? '').trim(),
+    link: String(formData.get('link') ?? '').trim(),
+    category: String(formData.get('category') ?? '').trim(),
+    visibility: String(formData.get('visibility') ?? 'hidden'),
+    verificationStatus: String(formData.get('verificationStatus') ?? 'not_submitted'),
+  });
+  const errors = validateAdvertiserProfile(nextProfile);
+
+  if (Object.keys(errors).length) {
+    state.advertiserProfileDraft = nextProfile;
+    state.profileEditErrors = errors;
+    syncContext();
+    render();
+    return;
+  }
+
+  state.advertiserProfile = nextProfile;
+  state.advertiserProfileDraft = null;
+  state.profileEditErrors = {};
+  persistAdvertiserProfile();
+
+  if (!state.profileEditErrors.form) {
+    navigate('/profile');
+  } else {
+    state.advertiserProfileDraft = nextProfile;
+    syncContext();
+    render();
+  }
+}
+
+function validateAdvertiserProfile(profile) {
+  const errors = {};
+
+  if (!profile.companyName) errors.companyName = 'Укажите название компании.';
+  if (profile.companyName.length > 60) errors.companyName = 'Название до 60 символов.';
+  if (!profile.description) errors.description = 'Добавьте короткое описание.';
+  if (profile.description.length > 220) errors.description = 'Описание до 220 символов.';
+  if (!profile.category) errors.category = 'Выберите категорию.';
+  if (!profile.link) errors.link = 'Добавьте сайт или Telegram-ссылку.';
+  if (profile.link && !isValidProfileLink(profile.link)) {
+    errors.link = 'Укажите сайт с http/https или Telegram-ссылку.';
+  }
+
+  return errors;
+}
+
+function isValidProfileLink(link) {
+  return /^(https?:\/\/[^\s.]+\.[^\s]{2,}|https?:\/\/t\.me\/[A-Za-z0-9_]{5,}|@[A-Za-z0-9_]{5,})$/.test(link);
+}
+
+function isAdvertiserProfileSubmittable(profile) {
+  return Boolean(
+    profile.companyName &&
+      profile.description &&
+      profile.link &&
+      profile.category &&
+      isValidProfileLink(profile.link)
+  );
+}
+
+function handleProfileAvatarInput(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    state.profileEditErrors = {
+      ...state.profileEditErrors,
+      avatar: 'Выберите изображение PNG, JPG или WebP.',
+    };
+    syncContext();
+    render();
+    return;
+  }
+
+  if (file.size > MAX_PROFILE_IMAGE_BYTES) {
+    state.profileEditErrors = {
+      ...state.profileEditErrors,
+      avatar: 'Изображение должно быть до 1.2 МБ.',
+    };
+    syncContext();
+    render();
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.addEventListener('load', () => {
+    state.advertiserProfileDraft = {
+      ...(state.advertiserProfileDraft ?? cloneProfile(state.advertiserProfile)),
+      avatarDataUrl: String(reader.result ?? ''),
+      avatarName: file.name,
+    };
+    state.profileEditErrors = {
+      ...state.profileEditErrors,
+      avatar: '',
+    };
+    syncContext();
+    render();
+  });
+  reader.readAsDataURL(file);
 }
 
 function handleAuthAction(action) {
