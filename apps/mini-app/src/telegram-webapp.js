@@ -37,11 +37,9 @@ export function initializeTelegramBoundary() {
 
 function applyTelegramTheme(themeParams) {
   const root = document.documentElement;
-  const background = themeParams.bg_color;
   const text = themeParams.text_color;
   const hint = themeParams.hint_color;
 
-  if (background) root.style.setProperty('--tg-surface', background);
   if (text) root.style.setProperty('--tg-text', text);
   if (hint) root.style.setProperty('--tg-muted', hint);
 }

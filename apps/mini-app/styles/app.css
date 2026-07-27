@@ -43,7 +43,7 @@ a {
   gap: 10px;
   margin: 0 -2px 18px;
   padding: 8px 2px 12px;
-  background: linear-gradient(180deg, var(--tg-surface) 70%, transparent);
+  background: var(--tg-surface);
 }
 
 .brand-lockup {
