@@ -2,9 +2,11 @@ export const routes = [
   {
     id: 'orders',
     path: '/',
-    label: 'Заказы',
+    label: 'Кампании',
+    creatorLabel: 'Заказы',
     navSlot: 1,
-    title: 'Заказы',
+    title: 'Кампании',
+    creatorTitle: 'Заказы',
     access: { auth: true, roles: ['advertiser', 'creator'] },
     render: renderOrders,
   },
@@ -139,6 +141,11 @@ export function getRouteLabel(route, activeRole) {
   return route.label;
 }
 
+export function getRouteTitle(route, activeRole) {
+  if (activeRole === 'creator' && route.creatorTitle) return route.creatorTitle;
+  return route.title;
+}
+
 function renderOrders(context) {
   if (context.auth.me?.activeRole === 'creator') return renderCreatorOrders();
   return renderAdvertiserOrders();
@@ -154,9 +161,9 @@ function renderAdvertiserOrders() {
       </div>
       <article class="focus-card">
         <span>Следующее действие</span>
-        <strong>Создайте первую задачу</strong>
+        <strong>Создайте первую кампанию</strong>
         <p>Укажите формат, бюджет, сроки и критерии приемки.</p>
-        <button class="primary-action" type="button" data-route="/create">Новая задача</button>
+        <button class="primary-action" type="button" data-route="/create">Новая кампания</button>
       </article>
       ${renderActivityList(['Заявок пока нет', 'Сделки появятся после выбора исполнителя', 'Отчеты будут доступны после приемки результата'])}
     </section>
@@ -227,7 +234,7 @@ function renderSettings(context) {
       </div>
       <div class="settings-list">
         ${renderSettingsLink('/settings/account', 'Аккаунт и доступ', 'Telegram, роль, входы и активные сессии.', 'Защищено')}
-        ${renderSettingsLink('/settings/notifications', 'Уведомления', 'Заказы, сделки, платежи и важные события.', 'Включены')}
+        ${renderSettingsLink('/settings/notifications', 'Уведомления', `${getWorkItemLabel(context.auth.me?.activeRole)}, сделки, платежи и важные события.`, 'Включены')}
         ${renderSettingsLink('/settings/payments', 'Платежи и выплаты', getPaymentsSummary(context), '0 ₽')}
         ${renderSettingsLink('/settings/privacy', 'Приватность и данные', 'Данные Telegram и история действий аккаунта.', '2 раздела')}
         ${renderSettingsLink('/settings/general', 'Язык и общие', getGeneralSummary(context), 'Выбор')}
@@ -267,12 +274,13 @@ function renderSettingsAccount(context) {
 
 function renderSettingsNotifications(context) {
   const notifications = context.settingsPrefs.notifications;
+  const workItemLabel = getWorkItemLabel(context.auth.me?.activeRole);
 
   return renderSettingsDetail(
     'Уведомления',
     `
       <div class="settings-detail-list">
-        ${renderSwitchRow('orders', 'Заказы', 'Новые отклики, изменения статуса и дедлайны.', notifications.orders)}
+        ${renderSwitchRow('orders', workItemLabel, 'Новые отклики, изменения статуса и дедлайны.', notifications.orders)}
         ${renderSwitchRow('deals', 'Сделки', 'Старт работы, приемка результата и спорные события.', notifications.deals)}
         ${renderSwitchRow('payments', 'Платежи', 'Резервирование бюджета, выплаты и финансовые статусы.', notifications.payments)}
         ${renderSwitchRow('service', 'Служебные', 'Важные изменения аккаунта и безопасности.', notifications.service)}
@@ -292,7 +300,7 @@ function renderSettingsPayments(context) {
         ['Документы', 'Акты и подтверждения выплат.', 'Нет'],
       ]
     : [
-        ['Баланс', '0 ₽ · пополнение будет доступно перед запуском заказа', 'Пусто'],
+        ['Баланс', '0 ₽ · пополнение будет доступно перед запуском кампании', 'Пусто'],
         ['Резервирование', 'Бюджет сделки фиксируется до приемки результата.', 'Готово'],
         ['Способ оплаты', 'Карта или счет появятся перед реальными оплатами.', 'Не указан'],
         ['История платежей', 'Пополнения, резервы и возвраты.', '0 операций'],
@@ -385,7 +393,7 @@ function renderCreate() {
     <section class="work-page">
       <article class="focus-card">
         <span>Черновик</span>
-        <strong>Подготовьте параметры заказа</strong>
+        <strong>Подготовьте параметры кампании</strong>
         <p>Формат, бюджет, дедлайн и критерии приемки будут собраны в одном брифе.</p>
       </article>
       <div class="deal-list">
@@ -626,6 +634,10 @@ function renderConfirmation(action) {
 function getPaymentsSummary(context) {
   if (context.auth.me?.activeRole === 'creator') return 'Баланс к выплате, реквизиты и история начислений.';
   return 'Баланс, резервирование бюджета и способы оплаты.';
+}
+
+function getWorkItemLabel(role) {
+  return role === 'creator' ? 'Заказы' : 'Кампании';
 }
 
 function getGeneralSummary(context) {

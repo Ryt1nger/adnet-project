@@ -1,9 +1,9 @@
 import { initializeTelegramBoundary } from './telegram-webapp.js';
-import { findRoute, getRouteLabel, routes } from './routes.js?v=settings-accordion';
+import { findRoute, getRouteLabel, getRouteTitle, routes } from './routes.js?v=campaigns-label';
 import { ROLE_OPTIONS } from './auth/api-contract.js';
 import { createAuthClient } from './auth/auth-client.js';
-import { createMockAuthAdapter } from './auth/mock-auth-adapter.js?v=settings-accordion';
-import { canAccessRoute, getAccessRedirect } from './auth/rbac.js?v=settings-accordion';
+import { createMockAuthAdapter } from './auth/mock-auth-adapter.js?v=campaigns-label';
+import { canAccessRoute, getAccessRedirect } from './auth/rbac.js?v=campaigns-label';
 import { createSessionStore } from './auth/session-store.js';
 
 const root = document.querySelector('#app-root');
@@ -174,7 +174,7 @@ function render() {
   }
 
   syncContext();
-  document.title = `${route.title} - Adnet`;
+  document.title = `${getRouteTitle(route, state.auth.me?.activeRole)} - Adnet`;
   root.innerHTML =
     route.access?.auth && state.auth.status === 'checking'
       ? renderGuardLoading()
