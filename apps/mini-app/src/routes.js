@@ -37,6 +37,69 @@ export const routes = [
     render: renderSettings,
   },
   {
+    id: 'settings-account',
+    path: '/settings/account',
+    label: 'Аккаунт и доступ',
+    title: 'Аккаунт и доступ',
+    nav: false,
+    access: { auth: true, roles: ['advertiser', 'creator'] },
+    render: renderSettingsAccount,
+  },
+  {
+    id: 'settings-notifications',
+    path: '/settings/notifications',
+    label: 'Уведомления',
+    title: 'Уведомления',
+    nav: false,
+    access: { auth: true, roles: ['advertiser', 'creator'] },
+    render: renderSettingsNotifications,
+  },
+  {
+    id: 'settings-payments',
+    path: '/settings/payments',
+    label: 'Платежи и выплаты',
+    title: 'Платежи и выплаты',
+    nav: false,
+    access: { auth: true, roles: ['advertiser', 'creator'] },
+    render: renderSettingsPayments,
+  },
+  {
+    id: 'settings-privacy',
+    path: '/settings/privacy',
+    label: 'Приватность и данные',
+    title: 'Приватность и данные',
+    nav: false,
+    access: { auth: true, roles: ['advertiser', 'creator'] },
+    render: renderSettingsPrivacy,
+  },
+  {
+    id: 'settings-general',
+    path: '/settings/general',
+    label: 'Язык и общие',
+    title: 'Язык и общие',
+    nav: false,
+    access: { auth: true, roles: ['advertiser', 'creator'] },
+    render: renderSettingsGeneral,
+  },
+  {
+    id: 'settings-documents',
+    path: '/settings/documents',
+    label: 'Документы сервиса',
+    title: 'Документы сервиса',
+    nav: false,
+    access: { auth: true, roles: ['advertiser', 'creator'] },
+    render: renderSettingsDocuments,
+  },
+  {
+    id: 'settings-actions',
+    path: '/settings/actions',
+    label: 'Действия аккаунта',
+    title: 'Действия аккаунта',
+    nav: false,
+    access: { auth: true, roles: ['advertiser', 'creator'] },
+    render: renderSettingsActions,
+  },
+  {
     id: 'create',
     path: '/create',
     label: 'Новая задача',
@@ -151,24 +214,175 @@ function renderProfile(context) {
 
 function renderSettings(context) {
   return `
-    <section class="work-page">
-      <article class="theme-card">
+    <section class="work-page settings-page">
+      <div class="settings-toolbar">
         <div>
-          <strong>Оформление</strong>
-          <p>Выберите комфортный режим интерфейса.</p>
+          <span>Управление</span>
+          <strong>${escapeHtml(getRoleLabel(context.auth.me?.activeRole))}</strong>
         </div>
-        <div class="theme-toggle" role="group" aria-label="Оформление">
-          ${renderThemeButton('dark', 'Темная', context.theme)}
-          ${renderThemeButton('light', 'Светлая', context.theme)}
+        <div class="theme-switch" role="group" aria-label="Тема интерфейса">
+          ${renderThemeButton('light', '☀', context.theme)}
+          ${renderThemeButton('dark', '☾', context.theme)}
         </div>
-      </article>
+      </div>
       <div class="settings-list">
-        <article><strong>Уведомления</strong><p>Дедлайны, новые заявки и решения по сделкам.</p></article>
-        <article><strong>Безопасность</strong><p>Вход через Telegram включен.</p></article>
-        <article><strong>Платежные данные</strong><p>Появятся перед реальными сделками.</p></article>
+        ${renderSettingsLink('/settings/account', 'Аккаунт и доступ', 'Telegram, роль, входы и активные сессии.', 'Защищено')}
+        ${renderSettingsLink('/settings/notifications', 'Уведомления', 'Заказы, сделки, платежи и важные события.', 'Включены')}
+        ${renderSettingsLink('/settings/payments', 'Платежи и выплаты', getPaymentsSummary(context), '0 ₽')}
+        ${renderSettingsLink('/settings/privacy', 'Приватность и данные', 'Данные Telegram и история действий аккаунта.', '2 раздела')}
+        ${renderSettingsLink('/settings/general', 'Язык и общие', getGeneralSummary(context), 'Выбор')}
+        ${renderSettingsLink('/settings/documents', 'Документы сервиса', 'Правила, условия, сервисные и пользовательские документы.', 'Библиотека')}
+        ${renderSettingsLink('/settings/actions', 'Действия аккаунта', 'Смена роли, выход и управление доступом.', 'Аккаунт')}
       </div>
     </section>
   `;
+}
+
+function renderSettingsAccount(context) {
+  const me = context.auth.me;
+  const username = me?.telegramUser.username ? `@${escapeHtml(me.telegramUser.username)}` : 'username не задан';
+  const otherSessions = [];
+
+  return renderSettingsDetail(
+    'Аккаунт и доступ',
+    `
+      <div class="settings-detail-list">
+        ${renderSettingsActionRow('telegram-account', 'Telegram-аккаунт', `${escapeHtml(me?.telegramUser.firstName ?? 'Пользователь')} · ${username}`, 'Открыть')}
+        ${renderRouteActionRow('/role', 'Роль в Adnet', getRoleLabel(me?.activeRole), 'Изменить')}
+        ${renderSettingsActionRow('login-security', 'Безопасность входа', 'Вход выполняется через Telegram.', 'Проверить')}
+      </div>
+      ${renderSettingsPanel(context.settingsPanel)}
+      <article class="session-card compact-session">
+        <span>Текущая сессия</span>
+        <strong>Это устройство</strong>
+        <p>Вход через Telegram активен для текущего рабочего экрана.</p>
+      </article>
+      ${
+        otherSessions.length
+          ? `<div class="settings-detail-list">${otherSessions.map((session) => renderSettingsActionRow(session.id, session.title, session.text, 'Открыть')).join('')}</div>`
+          : ''
+      }
+    `
+  );
+}
+
+function renderSettingsNotifications(context) {
+  const notifications = context.settingsPrefs.notifications;
+
+  return renderSettingsDetail(
+    'Уведомления',
+    `
+      <div class="settings-detail-list">
+        ${renderSwitchRow('orders', 'Заказы', 'Новые отклики, изменения статуса и дедлайны.', notifications.orders)}
+        ${renderSwitchRow('deals', 'Сделки', 'Старт работы, приемка результата и спорные события.', notifications.deals)}
+        ${renderSwitchRow('payments', 'Платежи', 'Резервирование бюджета, выплаты и финансовые статусы.', notifications.payments)}
+        ${renderSwitchRow('service', 'Служебные', 'Важные изменения аккаунта и безопасности.', notifications.service)}
+        ${renderSwitchRow('quiet', 'Тихий режим', 'Уведомления без звука ночью.', notifications.quiet)}
+      </div>
+    `
+  );
+}
+
+function renderSettingsPayments(context) {
+  const isCreator = context.auth.me?.activeRole === 'creator';
+  const rows = isCreator
+    ? [
+        ['Баланс к выплате', '0 ₽ · появится после принятой сделки', 'Пусто'],
+        ['Реквизиты', 'Можно будет добавить перед первой выплатой.', 'Не указаны'],
+        ['История выплат', 'Зачисления и удержания будут собраны здесь.', '0 операций'],
+        ['Документы', 'Акты и подтверждения выплат.', 'Нет'],
+      ]
+    : [
+        ['Баланс', '0 ₽ · пополнение будет доступно перед запуском заказа', 'Пусто'],
+        ['Резервирование', 'Бюджет сделки фиксируется до приемки результата.', 'Готово'],
+        ['Способ оплаты', 'Карта или счет появятся перед реальными оплатами.', 'Не указан'],
+        ['История платежей', 'Пополнения, резервы и возвраты.', '0 операций'],
+      ];
+
+  return renderSettingsDetail(
+    'Платежи и выплаты',
+    `
+      <div class="settings-detail-list">
+        ${rows
+          .map(([label, text, status]) => renderSettingsActionRow(`payment-${slugify(label)}`, label, text, status))
+          .join('')}
+      </div>
+      ${renderSettingsPanel(context.settingsPanel)}
+    `
+  );
+}
+
+function renderSettingsPrivacy(context) {
+  return renderSettingsDetail(
+    'Приватность и данные',
+    `
+      <div class="settings-detail-list">
+        ${renderSettingsActionRow('telegram-data', 'Данные Telegram', 'Имя, username и идентификатор для входа.', 'Открыть')}
+        ${renderSettingsActionRow('activity-history', 'История действий, изменений и проверок', 'Ключевые события аккаунта и сделок.', 'Открыть')}
+      </div>
+      ${renderSettingsPanel(context.settingsPanel)}
+    `
+  );
+}
+
+function renderSettingsGeneral(context) {
+  return renderSettingsDetail(
+    'Язык и общие',
+    `
+      ${renderChoiceGroup(
+        'language',
+        'Язык интерфейса',
+        [
+          ['ru', 'Русский'],
+          ['en', 'English'],
+        ],
+        context.settingsPrefs.language
+      )}
+      ${renderChoiceGroup(
+        'region',
+        'Регион',
+        [
+          ['ru', 'Россия · ₽'],
+          ['global', 'Международный'],
+        ],
+        context.settingsPrefs.region
+      )}
+    `
+  );
+}
+
+function renderSettingsDocuments(context) {
+  return renderSettingsDetail(
+    'Документы сервиса',
+    `
+      <div class="settings-detail-list">
+        ${renderSettingsActionRow('rules-doc', 'Правила платформы', 'Порядок работы заказчиков и исполнителей.', 'Открыть')}
+        ${renderSettingsActionRow('terms-doc', 'Условия сервиса', 'Общие условия использования Adnet.', 'Открыть')}
+        ${renderSettingsActionRow('data-doc', 'Политика данных', 'Как хранятся и используются данные аккаунта.', 'Открыть')}
+        ${renderSettingsActionRow('payment-doc', 'Платежные правила', 'Резервирование, приемка, выплаты и возвраты.', 'Открыть')}
+        ${renderSettingsActionRow('user-docs', 'Документы пользователя', 'Файлы и подтверждения, которые могут понадобиться для работы.', 'Открыть')}
+      </div>
+      ${renderSettingsPanel(context.settingsPanel)}
+    `
+  );
+}
+
+function renderSettingsActions(context) {
+  return renderSettingsDetail(
+    'Действия аккаунта',
+    `
+      <div class="settings-detail-list">
+        ${renderSettingsActionRow('role-action', 'Текущая роль', getRoleLabel(context.auth.me?.activeRole), 'Изменить')}
+        ${renderSettingsActionRow('session-action', 'Сессия', 'Вы вошли через Telegram на этом устройстве.', 'Управлять')}
+      </div>
+      <div class="settings-actions-grid">
+        <button class="primary-action" type="button" data-confirm-action="role">Сменить роль</button>
+        <button class="ghost-action danger-action" type="button" data-confirm-action="logout">Выйти</button>
+      </div>
+      ${renderSettingsPanel(context.settingsPanel)}
+      ${renderConfirmation(context.confirmAction)}
+    `
+  );
 }
 
 function renderCreate() {
@@ -268,10 +482,171 @@ function renderProfileItem(label, value) {
 
 function renderThemeButton(theme, label, activeTheme) {
   return `
-    <button class="${theme === activeTheme ? 'active' : ''}" type="button" data-theme-choice="${theme}" aria-pressed="${theme === activeTheme ? 'true' : 'false'}">
+    <button class="${theme === activeTheme ? 'active' : ''}" type="button" data-theme-choice="${theme}" aria-label="${theme === 'light' ? 'Светлая тема' : 'Темная тема'}" aria-pressed="${theme === activeTheme ? 'true' : 'false'}">
       ${escapeHtml(label)}
     </button>
   `;
+}
+
+function renderSettingsLink(path, title, text, status) {
+  return `
+    <button class="settings-link" type="button" data-route="${path}">
+      <span>
+        <strong>${escapeHtml(title)}</strong>
+        <p>${escapeHtml(text)}</p>
+      </span>
+      <em>${escapeHtml(status)}</em>
+    </button>
+  `;
+}
+
+function renderSettingsDetail(title, content) {
+  return `
+    <section class="work-page settings-detail-page">
+      <button class="settings-back" type="button" data-route="/settings" aria-label="Назад к настройкам">
+        <span aria-hidden="true">←</span>
+        <strong>${escapeHtml(title)}</strong>
+      </button>
+      ${content}
+    </section>
+  `;
+}
+
+function renderSettingsActionRow(panel, label, text, actionLabel) {
+  return `
+    <button class="settings-detail-row settings-action-row" type="button" data-settings-panel="${escapeHtml(panel)}">
+      <div>
+        <strong>${escapeHtml(label)}</strong>
+        <p>${escapeHtml(text)}</p>
+      </div>
+      <span>${escapeHtml(actionLabel)}</span>
+    </button>
+  `;
+}
+
+function renderRouteActionRow(path, label, text, actionLabel) {
+  return `
+    <button class="settings-detail-row settings-action-row" type="button" data-route="${escapeHtml(path)}">
+      <div>
+        <strong>${escapeHtml(label)}</strong>
+        <p>${escapeHtml(text)}</p>
+      </div>
+      <span>${escapeHtml(actionLabel)}</span>
+    </button>
+  `;
+}
+
+function renderSwitchRow(key, label, text, checked) {
+  return `
+    <button class="settings-detail-row switch-row" type="button" data-setting-toggle="${escapeHtml(key)}" role="switch" aria-checked="${checked ? 'true' : 'false'}">
+      <div>
+        <strong>${escapeHtml(label)}</strong>
+        <p>${escapeHtml(text)}</p>
+      </div>
+      <span class="switch-control ${checked ? 'is-on' : ''}" aria-hidden="true"></span>
+    </button>
+  `;
+}
+
+function renderChoiceGroup(key, title, options, activeValue) {
+  return `
+    <article class="choice-card">
+      <strong>${escapeHtml(title)}</strong>
+      <div class="choice-grid" role="group" aria-label="${escapeHtml(title)}">
+        ${options
+          .map(
+            ([value, label]) => `
+              <button class="${value === activeValue ? 'active' : ''}" type="button" data-setting-choice="${escapeHtml(key)}" data-setting-value="${escapeHtml(value)}" aria-pressed="${value === activeValue ? 'true' : 'false'}">
+                ${escapeHtml(label)}
+              </button>
+            `
+          )
+          .join('')}
+      </div>
+    </article>
+  `;
+}
+
+function renderSettingsPanel(panel) {
+  const panels = {
+    'telegram-account': ['Telegram-аккаунт', 'Adnet использует Telegram для входа и связи аккаунта с рабочими действиями. Имя и username показываются только там, где это нужно для сделки или безопасности.'],
+    'login-security': ['Безопасность входа', 'Вход подтверждается через Telegram. Позже здесь появятся дополнительные проверки, список устройств и журнал доступа.'],
+    'payment-balans': ['Баланс', 'Финансовая модель еще уточняется. Сейчас экран показывает будущую точку управления балансом без реальных операций.'],
+    'payment-balans-k-vyplate': ['Баланс к выплате', 'Начисления появятся после первой принятой сделки. До подключения выплат сумма остается нулевой.'],
+    'payment-rezervirovanie': ['Резервирование', 'Бюджет сделки планируется фиксировать до приемки результата, чтобы обе стороны видели прозрачный статус.'],
+    'payment-rekvizity': ['Реквизиты', 'Реквизиты можно будет добавить перед первой выплатой, когда будет выбран финансовый сценарий.'],
+    'payment-sposob-oplaty': ['Способ оплаты', 'Способы оплаты будут подключаться после утверждения платежной модели Adnet.'],
+    'payment-istoriya-vyplat': ['История выплат', 'Здесь будут собраны выплаты, удержания и связанные документы.'],
+    'payment-istoriya-platezhey': ['История платежей', 'Здесь будут собраны пополнения, резервы, списания и возвраты.'],
+    'payment-dokumenty': ['Документы', 'Акты и подтверждения выплат появятся после подключения финансового контура.'],
+    'telegram-data': ['Данные Telegram', 'Используются имя, username и Telegram ID для входа, отображения участникам сделки и восстановления доступа.'],
+    'activity-history': ['История действий, изменений и проверок', 'Здесь будет журнал важных изменений: входы, смена роли, обновление платежных данных, запуск и приемка сделок.'],
+    'rules-doc': ['Правила платформы', 'Раздел для правил взаимодействия, модерации, приемки результата и поведения участников.'],
+    'terms-doc': ['Условия сервиса', 'Будущий раздел с условиями использования Adnet и рамками ответственности сервиса.'],
+    'data-doc': ['Политика данных', 'Будущий раздел о составе данных, хранении, доступе и пользовательских запросах.'],
+    'payment-doc': ['Платежные правила', 'Будущий раздел о резервировании, приемке, выплатах, возвратах и спорных ситуациях.'],
+    'user-docs': ['Документы пользователя', 'Здесь могут появляться документы, подтверждения или файлы, нужные конкретному пользователю.'],
+    'role-action': ['Текущая роль', 'Смена роли влияет на навигацию и рабочие сценарии. Подтверждение доступно кнопкой ниже.'],
+    'session-action': ['Сессия', 'Текущая сессия активна через Telegram. Выход завершит доступ на этом устройстве.'],
+  };
+
+  if (!panel || !panels[panel]) return '';
+  const [title, text] = panels[panel];
+
+  return `
+    <article class="settings-info-panel">
+      <button type="button" data-settings-panel-close aria-label="Закрыть">×</button>
+      <strong>${escapeHtml(title)}</strong>
+      <p>${escapeHtml(text)}</p>
+    </article>
+  `;
+}
+
+function renderConfirmation(action) {
+  const confirmations = {
+    role: ['Сменить роль?', 'После выбора роли изменятся рабочие разделы и нижняя навигация.', 'Перейти'],
+    logout: ['Выйти из аккаунта?', 'Текущая сессия завершится, для возврата понадобится вход через Telegram.', 'Выйти'],
+  };
+
+  if (!action || !confirmations[action]) return '';
+  const [title, text, actionLabel] = confirmations[action];
+
+  return `
+    <article class="confirmation-panel">
+      <strong>${escapeHtml(title)}</strong>
+      <p>${escapeHtml(text)}</p>
+      <div>
+        <button class="ghost-action" type="button" data-confirm-cancel>Отмена</button>
+        <button class="primary-action" type="button" data-confirm-accept="${escapeHtml(action)}">${escapeHtml(actionLabel)}</button>
+      </div>
+    </article>
+  `;
+}
+
+function getPaymentsSummary(context) {
+  if (context.auth.me?.activeRole === 'creator') return 'Баланс к выплате, реквизиты и история начислений.';
+  return 'Баланс, резервирование бюджета и способы оплаты.';
+}
+
+function getGeneralSummary(context) {
+  const language = context.settingsPrefs.language === 'en' ? 'English' : 'Русский';
+  const region = context.settingsPrefs.region === 'global' ? 'международный' : 'Россия';
+  return `${language}, ${region}`;
+}
+
+function slugify(value) {
+  const map = {
+    'Баланс': 'balans',
+    'Баланс к выплате': 'balans-k-vyplate',
+    'Реквизиты': 'rekvizity',
+    'Резервирование': 'rezervirovanie',
+    'Способ оплаты': 'sposob-oplaty',
+    'История выплат': 'istoriya-vyplat',
+    'История платежей': 'istoriya-platezhey',
+    'Документы': 'dokumenty',
+  };
+
+  return map[value] ?? String(value).toLowerCase().replace(/\s+/g, '-');
 }
 
 function renderAuthState(kind, title, text, actionLabel = '', action = '') {

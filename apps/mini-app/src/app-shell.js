@@ -1,15 +1,16 @@
 import { initializeTelegramBoundary } from './telegram-webapp.js';
-import { findRoute, getRouteLabel, routes } from './routes.js?v=briefcase-icon';
+import { findRoute, getRouteLabel, routes } from './routes.js?v=settings-interactive';
 import { ROLE_OPTIONS } from './auth/api-contract.js';
 import { createAuthClient } from './auth/auth-client.js';
-import { createMockAuthAdapter } from './auth/mock-auth-adapter.js?v=briefcase-icon';
-import { canAccessRoute, getAccessRedirect } from './auth/rbac.js?v=briefcase-icon';
+import { createMockAuthAdapter } from './auth/mock-auth-adapter.js?v=settings-interactive';
+import { canAccessRoute, getAccessRedirect } from './auth/rbac.js?v=settings-interactive';
 import { createSessionStore } from './auth/session-store.js';
 
 const root = document.querySelector('#app-root');
 const nav = document.querySelector('[data-bottom-nav]');
 const navIndicator = document.createElement('span');
 const THEME_STORAGE_KEY = 'adnet.miniApp.theme';
+const SETTINGS_PREFS_STORAGE_KEY = 'adnet.miniApp.settingsPrefs';
 const THEME_OPTIONS = ['dark', 'light'];
 
 navIndicator.className = 'nav-focus-indicator';
@@ -28,6 +29,9 @@ const state = {
     errorMessage: '',
   },
   theme: readSavedTheme(),
+  settingsPrefs: readSavedSettingsPrefs(),
+  settingsPanel: '',
+  confirmAction: '',
 };
 
 const context = {
@@ -38,6 +42,9 @@ const context = {
   authHint: 'Подготавливаем ваш рабочий экран.',
   roleOptions: ROLE_OPTIONS,
   theme: state.theme,
+  settingsPrefs: state.settingsPrefs,
+  settingsPanel: state.settingsPanel,
+  confirmAction: state.confirmAction,
 };
 
 applyTheme(state.theme);
@@ -48,6 +55,9 @@ function getCurrentPath() {
 }
 
 function navigate(path) {
+  state.settingsPanel = '';
+  state.confirmAction = '';
+
   if (getCurrentPath() === path) {
     render();
     return;
@@ -83,8 +93,10 @@ function renderNavigation(activeRoute) {
 }
 
 function renderNavItem(route, activeRoute, activeRole) {
+  const isActive = route.id === activeRoute.id || (activeRoute.id.startsWith('settings-') && route.id === 'settings');
+
   return `
-    <button class="nav-item ${route.id === activeRoute.id ? 'active' : ''}" type="button" data-path="${route.path}" aria-current="${route.id === activeRoute.id ? 'page' : 'false'}" style="--nav-slot: ${route.navSlot?.[activeRole] ?? route.navSlot ?? 1}">
+    <button class="nav-item ${isActive ? 'active' : ''}" type="button" data-path="${route.path}" aria-current="${isActive ? 'page' : 'false'}" style="--nav-slot: ${route.navSlot?.[activeRole] ?? route.navSlot ?? 1}">
       <span aria-hidden="true">${renderNavIcon(route.id)}</span>
       <strong>${getRouteLabel(route, activeRole)}</strong>
     </button>
@@ -180,6 +192,42 @@ function readSavedTheme() {
   }
 }
 
+function readSavedSettingsPrefs() {
+  const defaults = {
+    notifications: {
+      orders: true,
+      deals: true,
+      payments: true,
+      service: true,
+      quiet: false,
+    },
+    language: 'ru',
+    region: 'ru',
+  };
+
+  try {
+    const savedPrefs = JSON.parse(window.localStorage?.getItem(SETTINGS_PREFS_STORAGE_KEY) ?? '{}');
+    return {
+      ...defaults,
+      ...savedPrefs,
+      notifications: {
+        ...defaults.notifications,
+        ...(savedPrefs.notifications ?? {}),
+      },
+    };
+  } catch {
+    return defaults;
+  }
+}
+
+function persistSettingsPrefs() {
+  try {
+    window.localStorage?.setItem(SETTINGS_PREFS_STORAGE_KEY, JSON.stringify(state.settingsPrefs));
+  } catch {
+    // Local preferences are an enhancement; controls remain usable during the current session.
+  }
+}
+
 function setTheme(theme) {
   if (!THEME_OPTIONS.includes(theme)) return;
   state.theme = theme;
@@ -251,6 +299,9 @@ function syncContext() {
   context.authLabel = getAuthLabel();
   context.authHint = getAuthHint();
   context.theme = state.theme;
+  context.settingsPrefs = state.settingsPrefs;
+  context.settingsPanel = state.settingsPanel;
+  context.confirmAction = state.confirmAction;
 }
 
 function getAuthLabel() {
@@ -319,8 +370,94 @@ root.addEventListener('click', (event) => {
   const themeButton = event.target.closest('[data-theme-choice]');
   if (themeButton) {
     setTheme(themeButton.dataset.themeChoice);
+    return;
+  }
+
+  const settingsToggle = event.target.closest('[data-setting-toggle]');
+  if (settingsToggle) {
+    toggleSetting(settingsToggle.dataset.settingToggle);
+    return;
+  }
+
+  const settingsChoice = event.target.closest('[data-setting-choice]');
+  if (settingsChoice) {
+    chooseSetting(settingsChoice.dataset.settingChoice, settingsChoice.dataset.settingValue);
+    return;
+  }
+
+  const settingsPanel = event.target.closest('[data-settings-panel]');
+  if (settingsPanel) {
+    state.settingsPanel = settingsPanel.dataset.settingsPanel;
+    state.confirmAction = '';
+    syncContext();
+    render();
+    return;
+  }
+
+  if (event.target.closest('[data-settings-panel-close]')) {
+    state.settingsPanel = '';
+    syncContext();
+    render();
+    return;
+  }
+
+  const confirmButton = event.target.closest('[data-confirm-action]');
+  if (confirmButton) {
+    state.confirmAction = confirmButton.dataset.confirmAction;
+    syncContext();
+    render();
+    return;
+  }
+
+  if (event.target.closest('[data-confirm-cancel]')) {
+    state.confirmAction = '';
+    syncContext();
+    render();
+    return;
+  }
+
+  const confirmAccept = event.target.closest('[data-confirm-accept]');
+  if (confirmAccept) {
+    handleConfirmedAction(confirmAccept.dataset.confirmAccept);
   }
 });
+
+function toggleSetting(key) {
+  if (!Object.hasOwn(state.settingsPrefs.notifications, key)) return;
+  state.settingsPrefs = {
+    ...state.settingsPrefs,
+    notifications: {
+      ...state.settingsPrefs.notifications,
+      [key]: !state.settingsPrefs.notifications[key],
+    },
+  };
+  persistSettingsPrefs();
+  syncContext();
+  render();
+}
+
+function chooseSetting(key, value) {
+  if (!['language', 'region'].includes(key)) return;
+  state.settingsPrefs = {
+    ...state.settingsPrefs,
+    [key]: value,
+  };
+  persistSettingsPrefs();
+  syncContext();
+  render();
+}
+
+function handleConfirmedAction(action) {
+  if (action === 'logout') {
+    logout();
+    return;
+  }
+
+  if (action === 'role') {
+    state.confirmAction = '';
+    navigate('/role');
+  }
+}
 
 function handleAuthAction(action) {
   if (action === 'telegram' || action === 'retry-auth') authenticateWithTelegram();
